@@ -1,0 +1,2 @@
+make sure to activate env using pip, NOT conda with cmd:
+source viennarna/bin/activate

@@ -37,12 +37,12 @@ def run_kinfold(sequence, num=10, time=100, temp=37, seed=None, extra_args=None)
     return {
         "fpt_times": fpt_times,
         "reached_mfe": len(fpt_times),
-        "timed_out": timed_out,
+        "timed_out": timed_out
     }
 
 # Example usage
 if __name__ == "__main__":
-    seq = "GGGAAACCAUGCUAGCUAGACUCAUCGAUGCGCGGGAAACCAUGCUAGCUAGACUCAUCGAUGCGC"
+    seq = "GAAACCAUGCUAGCUAGACU"
     result = run_kinfold(seq, num=5, time=10000000000, seed=229)
     print(f"FPT times: {result['fpt_times']}")
     print(f"Reached MFE: {result['reached_mfe']}/5")

@@ -29,8 +29,8 @@ from itertools import product
 from pathlib import Path
 
 # ── config ────────────────────────────────────────────────────────────────────
-ROOT_DIR       = "../all_seq"  # change to your root folder path
-OUTPUT_PARQUET = "dataset.parquet"
+ROOT_DIR       = "/Users/weberlin/src/cs229/cs229_rna_folding/neps_validation_set/all_seq_valid"  # change to your root folder path
+OUTPUT_PARQUET = "val_dataset.parquet"
 SUBOPT_DELTA   = 200             # 2.0 kcal/mol (deka-calories)
 MAX_MINIMA     = 20
 N_FPTS         = 1000

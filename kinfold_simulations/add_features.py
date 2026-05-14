@@ -6,7 +6,7 @@ from itertools import product
 
 # ── constants ─────────────────────────────────────────────────────────────────
 INPUT_PARQUET = "sampled_250x.parquet"
-OUTPUT_PARQUET = "test_10_features.parquet"   # overwrite in place
+OUTPUT_PARQUET = "features.parquet"   # overwrite in place
 SUBOPT_DELTA   = 200                      # 2.0 kcal/mol window (deka-calories)
 MAX_MINIMA     = 20                       # fixed max local minima per sequence
 NUCLEOTIDES    = ["A", "U", "G", "C"]

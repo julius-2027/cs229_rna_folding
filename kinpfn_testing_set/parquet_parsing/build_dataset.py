@@ -29,7 +29,7 @@ from itertools import product
 from pathlib import Path
 
 # ── config ────────────────────────────────────────────────────────────────────
-ROOT_DIR       = "all_seq"          # change to your root folder path
+ROOT_DIR       = "../all_seq"  # change to your root folder path
 OUTPUT_PARQUET = "dataset.parquet"
 SUBOPT_DELTA   = 200             # 2.0 kcal/mol (deka-calories)
 MAX_MINIMA     = 20

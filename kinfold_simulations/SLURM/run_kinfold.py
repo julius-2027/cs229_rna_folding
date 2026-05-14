@@ -1,0 +1,84 @@
+"""
+run_kinfold.py
+
+Runs Kinfold 1000 times for a single sequence (identified by row index)
+and saves the FPT vector to a temporary .npy file.
+
+Usage:
+    python run_kinfold.py --index 42 --input dataset.parquet --outdir fpt_results/
+
+The SLURM array job calls this with --index $SLURM_ARRAY_TASK_ID
+"""
+
+import argparse
+import subprocess
+import numpy as np
+import pandas as pd
+from pathlib import Path
+
+
+N_RUNS  = 1000
+KINFOLD = "Kinfold"   # change if not on PATH
+
+
+def run_kinfold(sequence: str, n_runs: int = N_RUNS) -> list:
+    """
+    Run Kinfold once with --num n_runs and parse all FPTs from output.
+    Kinfold input: sequence on one line, start structure (open chain) on next.
+    """
+    open_chain = "." * len(sequence)
+    inp = f"{sequence}\n{open_chain}\n"
+
+    result = subprocess.run(
+        [KINFOLD, "--num", str(n_runs), "--time", "1000000", "--fpt"],
+        input=inp,
+        capture_output=True,
+        text=True
+    )
+
+    fpts = []
+    for line in result.stdout.splitlines():
+        line = line.strip()
+        if "fpt" in line.lower():
+            try:
+                fpt = float(line.split(":")[-1].strip())
+                fpts.append(fpt)
+            except ValueError:
+                pass
+
+    return fpts
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--index",  type=int, required=True,
+                        help="Row index into the parquet file")
+    parser.add_argument("--input",  type=str, default="dataset.parquet",
+                        help="Input parquet file")
+    parser.add_argument("--outdir", type=str, default="fpt_results",
+                        help="Directory to write per-row .npy files")
+    args = parser.parse_args()
+
+    outdir = Path(args.outdir)
+    outdir.mkdir(parents=True, exist_ok=True)
+
+    out_path = outdir / f"fpts_{args.index:06d}.npy"
+    if out_path.exists():
+        print(f"[{args.index}] Already done, skipping.")
+        return
+
+    df = pd.read_parquet(args.input, columns=["sequence"])
+    seq = df.iloc[args.index]["sequence"]
+    print(f"[{args.index}] Running Kinfold for: {seq[:30]}...")
+
+    fpts = run_kinfold(seq, N_RUNS)
+
+    if len(fpts) != N_RUNS:
+        print(f"[{args.index}] WARNING: got {len(fpts)}/{N_RUNS} FPTs")
+
+    np.save(out_path, np.array(fpts, dtype=np.float32))
+    print(f"[{args.index}] Saved {len(fpts)} FPTs -> {out_path}")
+
+
+if __name__ == "__main__":
+    main()

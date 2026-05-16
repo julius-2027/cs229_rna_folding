@@ -1,7 +1,7 @@
 import subprocess
 
-KINFOLD = "/Users/weberlin/miniconda3/bin/Kinfold"
-
+#KINFOLD = "/Users/weberlin/miniconda3/bin/Kinfold"
+KINFOLD = "/usr/bin/Kinfold"
 
 def run_kinfold(sequence, num=10, time=100, temp=37, seed=None, extra_args=None):
 

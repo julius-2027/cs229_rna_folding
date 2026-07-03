@@ -1,3 +1,4 @@
+
 """
 run_experiments.py
 -------------------
@@ -15,7 +16,8 @@ import os
 import pandas as pd
 
 from data import prepare_data, make_dataloader
-from models import GLMBaseline, MeanPoolMLP, DynamicHybridLSTM, DynamicEmbeddingHybridLSTM
+import models as ms
+# from models import GLMBaseline, MeanPoolMLP, DynamicHybridLSTM, DynamicEmbeddingHybridLSTM
 from train_utils import set_seed, train_model, evaluate_model, plot_loss_curve, plot_prediction_grid
 
 # Ensure output directories exist
@@ -37,7 +39,7 @@ parser.add_argument(
     "--model", 
     type=str, 
     required=True, 
-    choices=["glm_baseline", "mean_pool_mlp", "bilstm", "bilstm_rna_fm"],
+    choices=["glm_baseline", "mean_pool_mlp", "bilstm", "bilstm_rna_fm", "bilstm_rna_fm_proj", "embed_transformer"],
     help="Name of the model config to run"
 )
 parser.add_argument(
@@ -54,17 +56,17 @@ args = parser.parse_args()
 set_seed(SEED)
 is_glm = (args.model == "glm_baseline")
 handpicked_cols = None
-# if is_glm:
-#     handpicked_cols = [
-#         "mfe", "n_local_minima", "gc_content",
-#         "freq_A", "freq_U", "freq_G", "freq_C",
-#         "freq_AA", "freq_AU", "freq_AG", "freq_AC",
-#         "freq_UA", "freq_UU", "freq_UG", "freq_UC",
-#         "freq_GA", "freq_GU", "freq_GG", "freq_GC",
-#         "freq_CA", "freq_CU", "freq_CG", "freq_CC"
-#     ]
-# else:
-handpicked_cols = ["gc_content", "mfe", "n_local_minima"]
+if is_glm:
+    handpicked_cols = [
+        "mfe", "n_local_minima", "gc_content",
+        "freq_A", "freq_U", "freq_G", "freq_C",
+        "freq_AA", "freq_AU", "freq_AG", "freq_AC",
+        "freq_UA", "freq_UU", "freq_UG", "freq_UC",
+        "freq_GA", "freq_GU", "freq_GG", "freq_GC",
+        "freq_CA", "freq_CU", "freq_CG", "freq_CC"
+    ]
+else:
+    handpicked_cols = ["gc_content", "mfe", "n_local_minima"]
 data = prepare_data(DATA_PATH, n_bins=N_BINS, random_state=SEED, handpicked_cols=handpicked_cols)
 static_dim = data.train.static_features.shape[1]
 output_dim = data.train.targets.shape[1]
@@ -77,25 +79,25 @@ print(f"Static feature dim: {static_dim} (Frequencies included: {is_glm}), outpu
 # ---------------------------------------------------------------------------
 model_configs = {
     "glm_baseline": {
-        "build": lambda: GLMBaseline(static_dim, output_dim),
+        "build": lambda: ms.GLMBaseline(static_dim, output_dim),
         "epochs": 50,
         "lr": 1e-2,
     },
     "mean_pool_mlp": {
-        "build": lambda: MeanPoolMLP(static_dim, output_dim, hidden_size=64),
+        "build": lambda: ms.MeanPoolMLP(static_dim, output_dim, hidden_size=64),
         "epochs": 50,
         "lr": 1e-3,
     },
     "bilstm": {
-        "build": lambda: DynamicHybridLSTM(
+        "build": lambda: ms.DynamicHybridLSTM(
             hidden_size=64, num_layers=1, static_feature_size=static_dim,
-            output_size=output_dim, mlp_hidden_size=64, bidirectional=True,
+            output_size=output_dim, mlp_hidden_size=64, bidirectional=False,
         ),
         "epochs": 100,
         "lr": 1e-3,
     },
     "bilstm_rna_fm": {
-        "build": lambda: DynamicEmbeddingHybridLSTM(
+        "build": lambda: ms.DynamicEmbeddingHybridLSTM(
             hidden_size=64, 
             num_layers=1, 
             static_feature_size=static_dim,
@@ -104,9 +106,37 @@ model_configs = {
             mlp_hidden_size=64, 
             bidirectional=True,
         ),
-        "epochs": 100,
+        "epochs": 15,
         "lr": 1e-3,
     },
+    "bilstm_rna_fm_proj": {
+        "build": lambda: ms.DynamicEmbeddingHybridLSTM_proj(
+            hidden_size=64, 
+            num_layers=1, 
+            static_feature_size=static_dim,
+            output_size=output_dim, 
+            embedding_dim=640, # Explicitly configured for RNA-FM dense vectors
+            mlp_hidden_size=64, 
+            bidirectional=True,
+            projection_dim=64,  # Optional projection layer dimension
+        ),
+        "epochs": 15,
+        "lr": 1e-3,
+    },
+    "embed_transformer": {
+        "build": lambda: ms.Embed_Transformer(
+            embedding_dim=640,
+            projection_dim=64,
+            num_heads=4,
+            num_layers=1,
+            dropout=0.5,
+            static_feature_size=static_dim,
+            output_size=output_dim,
+            mlp_hidden_size=64
+        ),
+        "epochs": 15,
+        "lr": 1e-3,
+    }
 }
 
 # Fetch chosen config
@@ -165,7 +195,8 @@ train_loader = make_dataloader(data.train, batching=model.BATCHING, batch_size=3
 val_loader = make_dataloader(data.val, batching=model.BATCHING, batch_size=32, shuffle=False)
 test_loader = make_dataloader(data.test, batching=model.BATCHING, batch_size=32, shuffle=False)
 
-# Train for the current targeted cycle (e.g., another 50 or 100 epochs)
+
+model = cfg["build"]().to(DEVICE)
 new_history = train_model(
     model, train_loader, val_loader,
     epochs=cfg["epochs"], lr=cfg["lr"],

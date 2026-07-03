@@ -150,6 +150,7 @@ def prepare_data(
 
     This is model-agnostic. Call once per experiment run (not once per model).
     """
+    
     df = load_dataset(parquet_path)
     y, bin_edges = build_histogram_targets(df, n_bins=n_bins)
     X = keep_handpicked_columns(df, handpicked_cols=handpicked_cols)
@@ -276,7 +277,7 @@ def collate_padded(batch):
     pools over valid positions, or any model using packed sequences).
     """
 
-    embeds, statics, targets, structs, seqs= zip(*batch)
+    seqs, structs, statics, targets, embeds = zip(*batch)
     lengths = torch.tensor([s.shape[0] for s in seqs], dtype=torch.long)
     max_len = int(lengths.max())
 

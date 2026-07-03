@@ -149,7 +149,6 @@ class DynamicHybridLSTM(BaseModel):
 
         combined = torch.cat([last_hidden, static_features], dim=-1)
         return self.mlp(combined)
-
 class DynamicEmbeddingHybridLSTM(BaseModel):
     """
     BiLSTM over the concatenated sequence+structure encoding, combined with
@@ -174,6 +173,8 @@ class DynamicEmbeddingHybridLSTM(BaseModel):
                  bidirectional: bool = True):
         super().__init__()
         self.bidirectional = bidirectional
+
+
         self.lstm = nn.LSTM(
             input_size=embedding_dim,
             hidden_size=hidden_size,
@@ -195,6 +196,8 @@ class DynamicEmbeddingHybridLSTM(BaseModel):
     def forward(self, sequence, structs, static_features, embeddings, lengths=None):
         x = embeddings
         use_packing = lengths is not None and not torch.all(lengths == lengths[0])
+        print("input shape:", x.shape, "lengths shape:", lengths.shape,
+      "lengths max:", lengths.max().item(), "lengths min:", lengths.min().item())
         if use_packing:
             packed = pack_padded_sequence(
                 x, lengths.cpu(), batch_first=True, enforce_sorted=False
@@ -209,4 +212,123 @@ class DynamicEmbeddingHybridLSTM(BaseModel):
             last_hidden = torch.cat([last_hidden_fwd, last_hidden], dim=-1)
 
         combined = torch.cat([last_hidden, static_features], dim=-1)
+        return self.mlp(combined)
+
+class DynamicEmbeddingHybridLSTM_proj(BaseModel):
+
+    """
+    BiLSTM over the concatenated sequence+structure encoding, combined with
+    static handpicked features via an MLP head.
+
+    Works with EITHER batching strategy:
+      - "exact_length": pass lengths=None (or a uniform-length tensor) and the
+        LSTM runs over the full, unpadded batch directly.
+      - "padded": pass the `lengths` tensor and the model will
+        pack_padded_sequence internally so padding doesn't corrupt the
+        final hidden state.
+
+    Default BATCHING is "exact_length" because that's the more efficient
+    option when available (no padding/packing overhead), but it will run
+    correctly under "padded" too.
+    """
+
+    BATCHING = "padded"
+
+    def __init__(self, hidden_size: int, num_layers: int, static_feature_size: int,
+                 output_size: int, embedding_dim: int = 640, mlp_hidden_size: int = 64,
+                 bidirectional: bool = True, projection_dim: int = 64):
+        super().__init__()
+        self.bidirectional = bidirectional
+
+        self.projection = nn.Linear(embedding_dim, projection_dim)
+
+        self.lstm = nn.LSTM(
+            input_size=projection_dim,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            batch_first=True,
+            bidirectional=bidirectional,
+        )
+
+        mlp_input_size = hidden_size + static_feature_size
+        if bidirectional:
+            mlp_input_size += hidden_size
+
+        self.mlp = nn.Sequential(
+            nn.Linear(mlp_input_size, mlp_hidden_size),
+            nn.ReLU(),
+            nn.Linear(mlp_hidden_size, output_size),
+        )
+
+    def forward(self, sequence, structs, static_features, embeddings, lengths=None):
+        x = embeddings
+        x = self.projection(x)  
+        use_packing = lengths is not None and not torch.all(lengths == lengths[0])
+        if use_packing:
+            packed = pack_padded_sequence(
+                x, lengths.cpu(), batch_first=True, enforce_sorted=False
+            )
+            _, (hidden, cell) = self.lstm(packed)
+        else:
+            _, (hidden, cell) = self.lstm(x)
+
+        last_hidden = hidden[-1]
+        if self.bidirectional:
+            last_hidden_fwd = hidden[-2]
+            last_hidden = torch.cat([last_hidden_fwd, last_hidden], dim=-1)
+
+        combined = torch.cat([last_hidden, static_features], dim=-1)
+        return self.mlp(combined)
+    
+
+class Embed_Transformer(nn.Module):
+    """
+    A simple transformer encoder that takes in embeddings and outputs a fixed-size representation.
+    """
+    BATCHING = "padded"
+    def __init__(self, embedding_dim: int = 640, projection_dim: int = 128, num_heads: int = 4, num_layers: int = 1, dropout: float = 0.3, static_feature_size: int = 3, output_size: int = 50, mlp_hidden_size: int = 64):
+        super().__init__()
+        self.embedding_dim = embedding_dim
+        self.projection_dim = projection_dim
+        self.input_proj = nn.Linear(embedding_dim, projection_dim)
+        self.pos_embedding = nn.Embedding(200, projection_dim) # Assuming max sequence length 
+        
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=projection_dim, 
+            nhead=num_heads, 
+            dim_feedforward=projection_dim * 2, 
+            dropout=dropout, 
+            batch_first=True
+        )
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
+        
+        # 4. Late Fusion Prediction Head (MLP)
+        mlp_input_size = projection_dim + static_feature_size
+        self.mlp = nn.Sequential(
+            nn.Linear(mlp_input_size, mlp_hidden_size),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(mlp_hidden_size, output_size),
+        )
+    def forward(self, sequence, structs, static_features, embeddings, lengths=None):
+        
+        x = embeddings
+        batch_size, seq_len, _ = x.shape
+        x = self.input_proj(x)  # Project embeddings to a lower dimension
+
+        positions = torch.arange(0, seq_len, device=x.device).unsqueeze(0).expand(batch_size, -1)
+        x = x + self.pos_embedding(positions)
+        x_trans = self.transformer(x)
+        if lengths is not None:
+            mask = torch.arange(seq_len, device=x.device).unsqueeze(0) < lengths.unsqueeze(1)
+            mask = mask.unsqueeze(-1).float() # (Batch, Seq_Len, 1)
+            # Sum up valid positions and divide by sequence lengths for a clean mean-pool
+            pooled = (x_trans * mask).sum(dim=1) / lengths.unsqueeze(-1).float()
+        else:
+            pooled = x_trans.mean(dim=1) # Fallback flat mean-pool if lengths missing
+            
+        # Step 5: Late Fusion with Tabular Static Features
+        combined = torch.cat([pooled, static_features], dim=-1)
+        
+        # Step 6: Map directly to output target distribution dimensions (50 bins)
         return self.mlp(combined)

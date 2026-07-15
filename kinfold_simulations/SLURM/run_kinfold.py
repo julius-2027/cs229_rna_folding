@@ -30,7 +30,8 @@ def run_kinfold(sequence: str, n_runs: int = N_RUNS) -> list:
     inp = f"{sequence}\n{open_chain}\n"
 
     result = subprocess.run(
-        [KINFOLD, "--num", str(n_runs), "--time", "1000000", "--fpt"],
+        #[KINFOLD, "--num", str(n_runs), "--time", "1000000", "--fpt"],
+        [KINFOLD, "--num", str(n_runs), "--time", "1000000000", "--log", "kinout"],
         input=inp,
         capture_output=True,
         text=True
@@ -39,9 +40,11 @@ def run_kinfold(sequence: str, n_runs: int = N_RUNS) -> list:
     fpts = []
     for line in result.stdout.splitlines():
         line = line.strip()
-        if "fpt" in line.lower():
+        #print(line)
+        if line[-2:]=="X1":
             try:
-                fpt = float(line.split(":")[-1].strip())
+                fpt = float(line.split(" ")[-2].strip())
+                #print(fpt)
                 fpts.append(fpt)
             except ValueError:
                 pass
@@ -62,7 +65,9 @@ def main():
     outdir = Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
 
-    out_path = outdir / f"fpts_{args.index:06d}.npy"
+    #out_path = outdir / f"fpts_{args.index:06d}.npy"
+    out_path = outdir / f"fpts_{args.index:06d}.txt"
+    
     if out_path.exists():
         print(f"[{args.index}] Already done, skipping.")
         return
@@ -76,7 +81,7 @@ def main():
     if len(fpts) != N_RUNS:
         print(f"[{args.index}] WARNING: got {len(fpts)}/{N_RUNS} FPTs")
 
-    np.save(out_path, np.array(fpts, dtype=np.float32))
+    np.savetxt(out_path, np.array(fpts, dtype=np.float32))
     print(f"[{args.index}] Saved {len(fpts)} FPTs -> {out_path}")
 
 

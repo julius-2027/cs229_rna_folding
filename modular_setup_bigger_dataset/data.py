@@ -324,14 +324,14 @@ def collate_padded(batch):
 # ---------------------------------------------------------------------------
 
 def make_dataloader(bundle: DataBundle, batching: str = "exact_length",
-                     batch_size: int = 32, shuffle: bool = True):
+                     batch_size: int = 32, shuffle: bool = True, embedding_path="fm-rna_embeddings_subset.pt"):
     """
     batching: "exact_length" -> ExactLengthBatchSampler + collate_exact_length
                                  (batch_size is ignored; batches = all items of
                                  a given length)
               "padded"       -> standard shuffled DataLoader + collate_padded
     """
-    dataset = RNADataset(bundle, embedding_path="fm-rna_embeddings.pt")
+    dataset = RNADataset(bundle, embedding_path=embedding_path)
     if batching == "exact_length":
         sampler = ExactLengthBatchSampler(dataset, shuffle=shuffle)
         return torch.utils.data.DataLoader(

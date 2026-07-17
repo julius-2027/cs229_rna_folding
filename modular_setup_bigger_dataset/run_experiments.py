@@ -29,6 +29,7 @@ os.makedirs("results", exist_ok=True)
 
 # generic
 DATA_PATH = "../kinfold_simulations/SLURM/dataset_with_fpts_subset.parquet"
+EMBEDDING_PATH = "fm-rna_embeddings_subset.pt"
 
 SEED = 42
 N_BINS = 50
@@ -194,9 +195,9 @@ if os.path.exists(checkpoint_path):
 # ---------------------------------------------------------------------------
 # 5. Data Loaders, Train, and Evaluate
 # ---------------------------------------------------------------------------
-train_loader = make_dataloader(data.train, batching=model.BATCHING, batch_size=32, shuffle=True)
-val_loader = make_dataloader(data.val, batching=model.BATCHING, batch_size=32, shuffle=False)
-test_loader = make_dataloader(data.test, batching=model.BATCHING, batch_size=32, shuffle=False)
+train_loader = make_dataloader(data.train, batching=model.BATCHING, batch_size=32, shuffle=True, embedding_path=EMBEDDING_PATH)
+val_loader = make_dataloader(data.val, batching=model.BATCHING, batch_size=32, shuffle=False, embedding_path=EMBEDDING_PATH)
+test_loader = make_dataloader(data.test, batching=model.BATCHING, batch_size=32, shuffle=False, embedding_path=EMBEDDING_PATH)
 
 
 model = cfg["build"]().to(DEVICE)

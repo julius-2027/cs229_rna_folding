@@ -25,7 +25,10 @@ os.makedirs("checkpoints", exist_ok=True)
 os.makedirs("results", exist_ok=True)
 
 # Weber
-DATA_PATH = "/Users/weberlin/src/cs229/cs229_rna_folding/kinpfn_testing_set/parquet_parsing/test_val_dataset.parquet"
+#DATA_PATH = "/Users/weberlin/src/cs229/cs229_rna_folding/kinpfn_testing_set/parquet_parsing/test_val_dataset.parquet"
+
+# generic
+DATA_PATH = "../kinpfn_testing_set/parquet_parsing/test_val_dataset.parquet"
 
 SEED = 42
 N_BINS = 50

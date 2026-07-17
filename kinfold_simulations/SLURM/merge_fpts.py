@@ -13,10 +13,11 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 
+N_RUNS = 1000
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input",  type=str, default="dataset.parquet")
+    parser.add_argument("--input",  type=str, default="features.parquet")
     parser.add_argument("--fptdir", type=str, default="fpt_results")
     parser.add_argument("--output", type=str, default="dataset_with_fpts.parquet")
     args = parser.parse_args()
@@ -31,24 +32,37 @@ def main():
     missing    = []
 
     for i in range(n_rows):
-        fpath = fptdir / f"fpts_{i:06d}.npy"
+        fpath = fptdir / f"fpts_{i:06d}.txt"
         if fpath.exists():
-            fpt_matrix.append(np.load(fpath))
+            with open(fpath, 'r') as file:
+                num_fpts_done = sum(1 for line in file)
+            if num_fpts_done == N_RUNS:
+                arr_fpts = np.loadtxt(fpath)
+            elif num_fpts_done >= 2:
+                arr_fpts = np.pad(np.loadtxt(fpath), (0,N_RUNS-num_fpts_done),
+                                  constant_values=np.float64(np.nan))
+            elif num_fpts_done == 1:
+                arr_fpts = np.pad([np.loadtxt(fpath)], (0,N_RUNS-num_fpts_done),
+                                  constant_values=np.float64(np.nan))
+            else:
+                arr_fpts = np.full(N_RUNS, np.nan, dtype=np.float64)
         else:
             missing.append(i)
-            fpt_matrix.append(np.full(1000, np.nan, dtype=np.float32))
+            arr_fpts = np.full(N_RUNS, np.nan, dtype=np.float64)
 
-    if missing:
-        print(f"WARNING: {len(missing)} missing FPT files (rows): {missing[:20]}{'...' if len(missing) > 20 else ''}")
-        print("Resubmit missing jobs with:")
-        print(f"  sbatch --array={','.join(str(i) for i in missing[:20])} submit_kinfold.sh")
+        if arr_fpts.size != N_RUNS:
+            print(i, num_fpts_done, arr_fpts)
+        fpt_matrix.append(arr_fpts)
 
-    df["fpts"] = fpt_matrix
+    df['fpts'] = fpt_matrix
+    df['fpts'] = df['fpts'].apply(lambda x: np.array(x).flatten() if isinstance(x, (list, np.ndarray)) else x)
+    # mask_rows = df['fpts'].apply(lambda arr: np.any(np.isnan(arr)))
+    # df_subset = df[mask_rows]
+    # df = df_subset
 
     df.to_parquet(args.output, index=False)
-    print(f"Done. Wrote {n_rows} rows -> {args.output}")
-    print(f"To get FPT matrix: np.stack(df['fpts'].values)  # shape ({n_rows}, 1000)")
-
+    print(f"Done. Wrote {len(df)} rows -> {args.output}")
+    print(f"To get FPT matrix: np.stack(df['fpts'].values)  # shape ({len(df)}, N_RUNS)")
 
 if __name__ == "__main__":
     main()

@@ -3,11 +3,16 @@ import fm
 import pandas as pd
 import os
 
-DATASET_PATH = "/Users/weberlin/src/cs229/cs229_rna_folding/kinpfn_testing_set/parquet_parsing/test_val_dataset.parquet"
+# Weber
+#DATASET_PATH = "/Users/weberlin/src/cs229/cs229_rna_folding/kinpfn_testing_set/parquet_parsing/test_val_dataset.parquet"
+
+# generic
+DATASET_PATH = "../kinpfn_testing_set/parquet_parsing/test_val_dataset.parquet"
+
 OUTPUT_PATH = 'fm-rna_embeddings.pt'
 
 # Load RNA-FM
-model, alphabet = fm.pretrained.rna_fm_t12()
+model, alphabet = fm.pretrained.rna_fm_t12('../RNA-FM_pretrained/RNA-FM_pretrained.pth')
 batch_converter = alphabet.get_batch_converter()
 model.eval()
 

@@ -14,27 +14,24 @@ import argparse
 import json
 import os
 import pandas as pd
-
+from pathlib import Path
 from data import prepare_data, make_dataloader
 import models as ms
 # from models import GLMBaseline, MeanPoolMLP, DynamicHybridLSTM, DynamicEmbeddingHybridLSTM
-#from train_utils import set_seed, train_model, evaluate_model, plot_loss_curve, plot_prediction_grid
-from train_utils import set_seed, train_model, evaluate_model, plot_loss_curve # binary classification
-
+from train_utils import set_seed, train_model, evaluate_model, plot_loss_curve, plot_prediction_grid
+import torch
 # Ensure output directories exist
 os.makedirs("checkpoints", exist_ok=True)
 os.makedirs("results", exist_ok=True)
 
-# Weber
-#DATA_PATH = "/Users/weberlin/src/cs229/cs229_rna_folding/kinpfn_testing_set/parquet_parsing/test_val_dataset.parquet"
 
 # generic
-DATA_PATH = "../kinfold_simulations/SLURM/dataset_with_fpts_subset_numpeaks1or2.parquet"
-EMBEDDING_PATH = "fm-rna_embeddings_subset_numpeaks1or2.pt"
-
+BASE_DIR = Path(__file__).resolve().parent
+DATA_PATH = BASE_DIR / "synthetic+real_dataset_filtered.parquet"
+EMBEDDING_PATH = BASE_DIR / "all_fm-rna_embeddings_filtered.pt"
+BIN_EDGES_PATH = BASE_DIR / "bin_edges.npy"
 SEED = 42
-#N_BINS = 50
-N_BINS = None # not needed for binary classification
+N_BINS = 50
 DEVICE = "cpu"  # change to "cuda" if available
 
 # ---------------------------------------------------------------------------
@@ -45,7 +42,7 @@ parser.add_argument(
     "--model", 
     type=str, 
     required=True, 
-    choices=["glm_baseline", "mean_pool_mlp", "bilstm", "bilstm_rna_fm", "bilstm_rna_fm_proj", "embed_transformer", "embed_transformer_morelayers", "embed_transformer_nodropout"],
+    choices=["glm_baseline", "mean_pool_mlp", "bilstm", "bilstm_rna_fm", "bilstm_rna_fm_proj", "embed_transformer"],
     help="Name of the model config to run"
 )
 parser.add_argument(
@@ -73,11 +70,10 @@ if is_glm:
     ]
 else:
     handpicked_cols = ["gc_content", "mfe", "n_local_minima"]
-data = prepare_data(DATA_PATH, n_bins=N_BINS, random_state=SEED, handpicked_cols=handpicked_cols)
+data = prepare_data(DATA_PATH, n_bins=N_BINS, random_state=SEED, handpicked_cols=handpicked_cols, bin_edges_path=BIN_EDGES_PATH)
 static_dim = data.train.static_features.shape[1]
-#output_dim = data.train.targets.shape[1]
-output_dim = 1 # binary classification
-#bin_centers = (data.bin_edges[:-1] + data.bin_edges[1:]) / 2
+output_dim = data.train.targets.shape[1]
+bin_centers = (data.bin_edges[:-1] + data.bin_edges[1:]) / 2
 
 print(f"Train/Val/Test sizes: {len(data.train.sequences)}/{len(data.val.sequences)}/{len(data.test.sequences)}")
 print(f"Static feature dim: {static_dim} (Frequencies included: {is_glm}), output dim: {output_dim}")
@@ -100,7 +96,7 @@ model_configs = {
             hidden_size=64, num_layers=1, static_feature_size=static_dim,
             output_size=output_dim, mlp_hidden_size=64, bidirectional=False,
         ),
-        "epochs": 100,
+        "epochs": 15,
         "lr": 1e-3,
     },
     "bilstm_rna_fm": {
@@ -144,34 +140,17 @@ model_configs = {
         "epochs": 15,
         "lr": 1e-3,
     },
-    "embed_transformer_morelayers": {
-        "build": lambda: ms.Embed_Transformer(
-            embedding_dim=640,
-            projection_dim=64,
-            num_heads=4,
-            num_layers=5,
-            dropout=0.5,
-            static_feature_size=static_dim,
-            output_size=output_dim,
-            mlp_hidden_size=64
+    "rna_loc": {
+        "build": lambda: ms.RNALocLM(
+            embedding_dim = 640, cnn_channels = 128,
+            kernel_sizes = (3, 4, 5), lstm_hidden   = 128,
+            lstm_layers = 1, num_heads = 8,
+            static_feature_size = 3, output_size = 50,
+            mlp_hidden_size = 64, dropout = 0.3
         ),
         "epochs": 15,
         "lr": 1e-3,
-    },
-    "embed_transformer_nodropout": {
-        "build": lambda: ms.Embed_Transformer(
-            embedding_dim=640,
-            projection_dim=64,
-            num_heads=4,
-            num_layers=1,
-            dropout=0.0,
-            static_feature_size=static_dim,
-            output_size=output_dim,
-            mlp_hidden_size=64
-        ),
-        "epochs": 15,
-        "lr": 1e-3,
-    },
+    }
 }
 
 # Fetch chosen config
@@ -196,7 +175,6 @@ existing_history = {"train_loss": [], "val_loss": []}
 cumulative_epochs = 0
 
 if os.path.exists(checkpoint_path):
-    import torch
     print(f"Found existing checkpoint at {checkpoint_path}. Loading weights to resume training...")
     try:
         checkpoint = torch.load(checkpoint_path, map_location=DEVICE)
@@ -226,9 +204,11 @@ if os.path.exists(checkpoint_path):
 # ---------------------------------------------------------------------------
 # 5. Data Loaders, Train, and Evaluate
 # ---------------------------------------------------------------------------
-train_loader = make_dataloader(data.train, batching=model.BATCHING, batch_size=32, shuffle=True, embedding_path=EMBEDDING_PATH)
-val_loader = make_dataloader(data.val, batching=model.BATCHING, batch_size=32, shuffle=False, embedding_path=EMBEDDING_PATH)
-test_loader = make_dataloader(data.test, batching=model.BATCHING, batch_size=32, shuffle=False, embedding_path=EMBEDDING_PATH)
+print(f"Loading RNA-FM embedding dictionary from {EMBEDDING_PATH}...")
+embeddings_dict = torch.load(EMBEDDING_PATH)
+train_loader = make_dataloader(data.train, batching=model.BATCHING, batch_size=32, shuffle=True, embedding_dict=embeddings_dict)
+val_loader = make_dataloader(data.val, batching=model.BATCHING, batch_size=32, shuffle=False, embedding_dict=embeddings_dict)
+test_loader = make_dataloader(data.test, batching=model.BATCHING, batch_size=32, shuffle=False, embedding_dict=embeddings_dict)
 
 
 model = cfg["build"]().to(DEVICE)
@@ -258,10 +238,8 @@ run_summary = {
     "final_train_loss": new_history["train_loss"][-1],
     "final_val_loss": new_history["val_loss"][-1],
     "best_val_loss_all_time": min(combined_val_loss),
-    "accuracy": eval_result["accuracy"],
-    "precision": eval_result["precision"],
-    "recall": eval_result["recall"],
-    "f1": eval_result["f1"],
+    "test_js_mean": eval_result["js_mean"],
+    "test_js_median": eval_result["js_median"],
     "history": {
         "train_loss": combined_train_loss,
         "val_loss": combined_val_loss
@@ -280,4 +258,4 @@ print(pd.DataFrame([run_summary]).drop(columns=["history"]).to_string(index=Fals
 # ---------------------------------------------------------------------------
 # Plot the full aggregated historical timeline
 plot_loss_curve(run_summary["history"])
-#plot_prediction_grid(bin_centers, eval_result, n_examples=6)
+plot_prediction_grid(bin_centers, eval_result, n_examples=6)

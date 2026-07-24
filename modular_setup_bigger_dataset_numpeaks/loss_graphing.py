@@ -6,10 +6,11 @@ import matplotlib.pyplot as plt
 # CONFIGURATION: Simply add or remove your JSON file paths here
 # ===========================================================================
 FILE_PATHS = [
-    "results/metrics_bilstm_rna_fm_test.json",
-    "results/metrics_embed_transformer_test.json",
-    "results/metrics_glm_baseline_freqs.json",
-    "results/metrics_bilstm_rna_fm_test.json"
+    "results/metrics_bilstm_rna_fm_v1.json",
+    "results/metrics_embed_transformer_v1.json",
+    "results/metrics_glm_baseline_v1.json",
+    "results/metrics_embed_transformer_morelayers_v1.json",
+    "results/metrics_embed_transformer_nodropout_v1.json"
 ]
 
 def plot_learning_curves(json_paths):
@@ -38,13 +39,15 @@ def plot_learning_curves(json_paths):
         epochs = list(range(1, len(train_loss) + 1))
         
         # Plot training loss (dashed line)
-        plt.plot(
+        train_loss_curve, = plt.plot(
             epochs, 
             train_loss, 
             linestyle="--", 
             alpha=0.7, 
             label=f"{label_prefix} - Train"
         )
+
+        previous_color = train_loss_curve.get_color()
         
         # Plot validation loss (solid line, thicker to stand out)
         plt.plot(
@@ -52,7 +55,8 @@ def plot_learning_curves(json_paths):
             val_loss, 
             linestyle="-", 
             linewidth=2, 
-            label=f"{label_prefix} - Val"
+            label=f"{label_prefix} - Val",
+            color=previous_color
         )
         
         # Optional: Drop a small marker pinpointing the best validation epoch
@@ -64,7 +68,8 @@ def plot_learning_curves(json_paths):
                 best_val, 
                 s=40, 
                 zorder=5, 
-                label=f"Best Val: {best_val:.4f} (Ep {best_epoch})"
+                label=f"Best Val: {best_val:.4f} (Ep {best_epoch})",
+                color=previous_color
             )
             
         loaded_any = True
@@ -74,7 +79,7 @@ def plot_learning_curves(json_paths):
         return
 
     # Graph Styling Parameters
-    plt.title("Model Convergence Comparison (KL-Divergence Loss)", fontsize=14, fontweight="bold", pad=15)
+    plt.title("Model Convergence Comparison (Cross-Entropy Loss)", fontsize=14, fontweight="bold", pad=15)
     plt.xlabel("Epochs", fontsize=12)
     plt.ylabel("Loss Magnitude", fontsize=12)
     plt.grid(True, linestyle=":", alpha=0.6)

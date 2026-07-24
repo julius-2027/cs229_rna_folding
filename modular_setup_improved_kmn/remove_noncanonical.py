@@ -1,17 +1,11 @@
 import pandas as pd
 import torch
 
-# PARQUET_PATH = "/Users/weberlin/src/cs229/cs229_rna_folding_clone/modular_setup_improved/synthetic+real_dataset.parquet"
-# EMBEDDINGS_PATH = "/Users/weberlin/src/cs229/cs229_rna_folding_clone/modular_setup_improved/all_fm-rna_embeddings.pt"
+PARQUET_PATH = "/Users/weberlin/src/cs229/cs229_rna_folding_clone/modular_setup_improved/synthetic+real_dataset.parquet"
+EMBEDDINGS_PATH = "/Users/weberlin/src/cs229/cs229_rna_folding_clone/modular_setup_improved/all_fm-rna_embeddings.pt"
 
-# FILTERED_PARQUET_PATH = "/Users/weberlin/src/cs229/cs229_rna_folding_clone/modular_setup_improved/synthetic+real_dataset_filtered.parquet"
-# FILTERED_EMBEDDINGS_PATH = "/Users/weberlin/src/cs229/cs229_rna_folding_clone/modular_setup_improved/all_fm-rna_embeddings_filtered.pt"
-
-PARQUET_PATH = "synthetic+real_dataset.parquet"
-EMBEDDINGS_PATH = "all_fm-rna_embeddings.pt"
-
-FILTERED_PARQUET_PATH = "synthetic+real_dataset_filtered.parquet"
-FILTERED_EMBEDDINGS_PATH = "all_fm-rna_embeddings_filtered.pt"
+FILTERED_PARQUET_PATH = "/Users/weberlin/src/cs229/cs229_rna_folding_clone/modular_setup_improved/synthetic+real_dataset_filtered.parquet"
+FILTERED_EMBEDDINGS_PATH = "/Users/weberlin/src/cs229/cs229_rna_folding_clone/modular_setup_improved/all_fm-rna_embeddings_filtered.pt"
 
 CANONICAL_NUCLEOTIDES = set("AUGC")
 

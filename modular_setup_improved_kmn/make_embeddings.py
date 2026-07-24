@@ -7,8 +7,7 @@ import os
 #DATASET_PATH = "/Users/weberlin/src/cs229/cs229_rna_folding/kinpfn_testing_set/parquet_parsing/test_val_dataset.parquet"
 
 # generic
-#DATASET_PATH = "/Users/weberlin/src/cs229/cs229_rna_folding_clone/kinfold_simulations/feature_extraction/synthetic+real_dataset_no_keys.parquet"
-DATASET_PATH = "../kinfold_simulations/feature_extraction/synthetic+real_dataset.parquet"
+DATASET_PATH = "/Users/weberlin/src/cs229/cs229_rna_folding_clone/kinfold_simulations/feature_extraction/synthetic+real_dataset_no_keys.parquet"
 
 OUTPUT_PATH = 'all_fm-rna_embeddings.pt'
 

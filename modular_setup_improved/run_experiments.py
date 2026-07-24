@@ -42,7 +42,7 @@ parser.add_argument(
     "--model", 
     type=str, 
     required=True, 
-    choices=["glm_baseline", "mean_pool_mlp", "bilstm", "bilstm_rna_fm", "bilstm_rna_fm_proj", "embed_transformer"],
+    choices=["glm_baseline", "mean_pool_mlp", "bilstm", "bilstm_rna_fm", "bilstm_rna_fm_proj", "embed_transformer", "rna_loc"],
     help="Name of the model config to run"
 )
 parser.add_argument(
@@ -83,12 +83,12 @@ print(f"Static feature dim: {static_dim} (Frequencies included: {is_glm}), outpu
 model_configs = {
     "glm_baseline": {
         "build": lambda: ms.GLMBaseline(static_dim, output_dim),
-        "epochs": 50,
+        "epochs": 15,
         "lr": 1e-2,
     },
     "mean_pool_mlp": {
         "build": lambda: ms.MeanPoolMLP(static_dim, output_dim, hidden_size=64),
-        "epochs": 50,
+        "epochs": 15,
         "lr": 1e-3,
     },
     "bilstm": {

@@ -7,9 +7,9 @@ import os
 #DATASET_PATH = "/Users/weberlin/src/cs229/cs229_rna_folding/kinpfn_testing_set/parquet_parsing/test_val_dataset.parquet"
 
 # generic
-DATASET_PATH = "../kinpfn_testing_set/parquet_parsing/test_val_dataset.parquet"
+DATASET_PATH = "/Users/weberlin/src/cs229/cs229_rna_folding_clone/kinfold_simulations/feature_extraction/synthetic+real_dataset_no_keys.parquet"
 
-OUTPUT_PATH = 'fm-rna_embeddings.pt'
+OUTPUT_PATH = 'all_fm-rna_embeddings.pt'
 
 # Load RNA-FM
 model, alphabet = fm.pretrained.rna_fm_t12('../RNA-FM_pretrained/RNA-FM_pretrained.pth')
@@ -21,7 +21,7 @@ device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.i
 model = model.to(device)
 print(f"Running RNA-FM extraction on device: {device}")
 
-df = pd.read_parquet(DATASET_PATH)
+df = pd.read_parquet(DATASET_PATH).reset_index(drop=True)
 
 # CRITICAL: Pair the exact Dataframe string Index Key with the sequence 
 data = [(str(idx), row['sequence']) for idx, row in df.iterrows()]

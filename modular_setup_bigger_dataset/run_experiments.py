@@ -97,7 +97,7 @@ model_configs = {
             hidden_size=64, num_layers=1, static_feature_size=static_dim,
             output_size=output_dim, mlp_hidden_size=64, bidirectional=False,
         ),
-        "epochs": 100,
+        "epochs": 15,
         "lr": 1e-3,
     },
     "bilstm_rna_fm": {

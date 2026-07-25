@@ -10,6 +10,7 @@ total cumulative epoch count across runs.
 Run with:  python run_experiments.py --model bilstm --version v1
 """
 
+import numpy as np
 import argparse
 import json
 import os
@@ -28,7 +29,8 @@ os.makedirs("results", exist_ok=True)
 # generic
 BASE_DIR = Path(__file__).resolve().parent
 BASE_DIR = BASE_DIR / "../modular_setup_improved" # for modular_setup_improved_kmn
-DATA_PATH = BASE_DIR / "synthetic+real_dataset_filtered.parquet"
+MASK_PATH = BASE_DIR / "mask_2peaks.parquet" # for training on only those examples with 2 peaks
+DATA_PATH = BASE_DIR / "synthetic+real_dataset_filtered_numpeaks.parquet"
 EMBEDDING_PATH = BASE_DIR / "all_fm-rna_embeddings_filtered.pt"
 BIN_EDGES_PATH = BASE_DIR / "bin_edges.npy"
 SEED = 42
@@ -71,7 +73,13 @@ if is_glm:
     ]
 else:
     handpicked_cols = ["gc_content", "mfe", "n_local_minima"]
-data = prepare_data(DATA_PATH, n_bins=N_BINS, random_state=SEED, handpicked_cols=handpicked_cols, bin_edges_path=BIN_EDGES_PATH)
+
+if MASK_PATH is not None:
+    data_mask = pd.read_parquet(MASK_PATH)
+else:
+    data_mask = None
+
+data = prepare_data(DATA_PATH, n_bins=N_BINS, random_state=SEED, handpicked_cols=handpicked_cols, bin_edges_path=BIN_EDGES_PATH, data_mask=data_mask)
 static_dim = data.train.static_features.shape[1]
 output_dim = data.train.targets.shape[1]
 bin_centers = (data.bin_edges[:-1] + data.bin_edges[1:]) / 2
@@ -207,6 +215,14 @@ if os.path.exists(checkpoint_path):
 # ---------------------------------------------------------------------------
 print(f"Loading RNA-FM embedding dictionary from {EMBEDDING_PATH}...")
 embeddings_dict = torch.load(EMBEDDING_PATH)
+
+if data_mask is not None:
+    embeddings_dict_aftermask = {}
+    for key in embeddings_dict.keys():
+        if data_mask['num_peaks'][int(key)]:
+            embeddings_dict_aftermask[key] = embeddings_dict[key]
+    embeddings_dict = embeddings_dict_aftermask
+
 train_loader = make_dataloader(data.train, batching=model.BATCHING, batch_size=32, shuffle=True, embedding_dict=embeddings_dict)
 val_loader = make_dataloader(data.val, batching=model.BATCHING, batch_size=32, shuffle=False, embedding_dict=embeddings_dict)
 test_loader = make_dataloader(data.test, batching=model.BATCHING, batch_size=32, shuffle=False, embedding_dict=embeddings_dict)

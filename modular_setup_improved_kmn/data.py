@@ -152,6 +152,7 @@ def prepare_data(
     val_size: float = 0.15,
     random_state: int = 42,
     bin_edges_path: str = None,
+    data_mask: np.ndarray= None,
 ) -> PreparedData:
     """
     Full pipeline: load -> build targets -> drop unused cols -> split -> scale -> encode.
@@ -164,6 +165,8 @@ def prepare_data(
     """
 
     df = load_dataset(parquet_path)
+    if data_mask is not None:
+        df = df[np.array(data_mask['num_peaks'])]
     bin_edges = np.load(bin_edges_path) if bin_edges_path else None
     y, bin_edges = build_histogram_targets(df, n_bins=n_bins, bin_edges=bin_edges)
     X = keep_handpicked_columns(df, handpicked_cols=handpicked_cols)

@@ -12,9 +12,12 @@ import matplotlib.pyplot as plt
 # ]
 
 FILE_PATHS = [
-    "results/metrics_bilstm_v1.json",
+    "results/metrics_bilstm_rna_fm_v1.json",
+    "results/metrics_embed_transformer_v1.json",
+    "results/metrics_rna_loc_v1.json",
     "results/metrics_glm_baseline_v1.json",
-    "results/metrics_mean_pool_mlp_v1.json"
+    "results/metrics_mean_pool_mlp_v1.json",
+    "results/metrics_bilstm_v1.json"
 ]
 
 def plot_learning_curves(json_paths):
@@ -43,7 +46,7 @@ def plot_learning_curves(json_paths):
         epochs = list(range(1, len(train_loss) + 1))
         
         # Plot training loss (dashed line)
-        plt.plot(
+        train_loss_curve, = plt.plot(
             epochs, 
             train_loss, 
             linestyle="--", 
@@ -51,13 +54,16 @@ def plot_learning_curves(json_paths):
             label=f"{label_prefix} - Train"
         )
         
+        previous_color = train_loss_curve.get_color()
+
         # Plot validation loss (solid line, thicker to stand out)
         plt.plot(
             epochs, 
             val_loss, 
             linestyle="-", 
             linewidth=2, 
-            label=f"{label_prefix} - Val"
+            label=f"{label_prefix} - Val",
+            color=previous_color
         )
             
         loaded_any = True

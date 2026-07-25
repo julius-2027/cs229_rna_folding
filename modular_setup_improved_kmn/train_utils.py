@@ -17,6 +17,7 @@ import torch
 import torch.nn as nn
 from scipy.spatial.distance import jensenshannon
 
+BANDWIDTH = 2
 
 def set_seed(seed: int = 42):
     torch.manual_seed(seed)
@@ -25,7 +26,6 @@ def set_seed(seed: int = 42):
     random.seed(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
-
 
 def _run_epoch(model, loader, criterion, optimizer=None, device="cpu"):
     """One pass over `loader`. If optimizer is given, trains; else evaluates."""
@@ -49,7 +49,21 @@ def _run_epoch(model, loader, criterion, optimizer=None, device="cpu"):
                 optimizer.zero_grad()
 
             logits = model(sequences, structures, statics, embeds, lengths)
-            log_probs = torch.log_softmax(logits, dim=-1)
+            
+            # OLD approach: quantized softmax
+            # log_probs = torch.log_softmax(logits, dim=-1)
+
+            # NEW approach: kernel mixture head
+            weights = torch.softmax(logits, dim=-1) # shape (batch_size, num_bins)
+            xgrid = torch.outer(torch.ones(weights.shape[-1]), torch.arange(weights.shape[-1])) # shape (num_bins, num_bins)
+            means = xgrid.T # shape (num_bins, num_bins)
+            bandwidth = BANDWIDTH
+            gaussians = 1/(math.sqrt(2*math.pi)*bandwidth)*torch.exp(-0.5*((xgrid - means)/bandwidth)**2) # shape (num_bins, num_bins)
+            probs = weights @ gaussians # shape (batch_size, num_bins)
+            normalizations = torch.outer(torch.sum(probs, dim=-1), torch.ones(probs.shape[-1])) # shape (batch_size, num_bins)
+            probs /= normalizations # shape (batch_size, num_bins)
+            log_probs = torch.log(probs) # shape (batch_size, num_bins)
+
             loss = criterion(log_probs, targets)
 
             if is_train:
@@ -160,7 +174,19 @@ def evaluate_model(model, loader, device: str = "cpu", checkpoint_path: str | No
             lengths = lengths.to(device)
 
             logits = model(sequences, structures, statics, embeds, lengths)
-            probs = torch.softmax(logits, dim=-1)
+
+            # OLD approach: quantized softmax
+            # probs = torch.softmax(logits, dim=-1)
+
+            # NEW approach: kernel mixture head
+            weights = torch.softmax(logits, dim=-1) # shape (batch_size, num_bins)
+            xgrid = torch.outer(torch.ones(weights.shape[-1]), torch.arange(weights.shape[-1])) # shape (num_bins, num_bins)
+            means = xgrid.T # shape (num_bins, num_bins)
+            bandwidth = BANDWIDTH
+            gaussians = 1/(math.sqrt(2*math.pi)*bandwidth)*torch.exp(-0.5*((xgrid - means)/bandwidth)**2) # shape (num_bins, num_bins)
+            probs = weights @ gaussians # shape (batch_size, num_bins)
+            normalizations = torch.outer(torch.sum(probs, dim=-1), torch.ones(probs.shape[-1])) # shape (batch_size, num_bins)
+            probs /= normalizations # shape (batch_size, num_bins)
 
             all_preds.append(probs.cpu().numpy())
             all_targets.append(targets.numpy())

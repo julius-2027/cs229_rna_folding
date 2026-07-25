@@ -27,6 +27,7 @@ os.makedirs("results", exist_ok=True)
 
 # generic
 BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = BASE_DIR / "../modular_setup_improved" # for modular_setup_improved_kmn
 DATA_PATH = BASE_DIR / "synthetic+real_dataset_filtered.parquet"
 EMBEDDING_PATH = BASE_DIR / "all_fm-rna_embeddings_filtered.pt"
 BIN_EDGES_PATH = BASE_DIR / "bin_edges.npy"

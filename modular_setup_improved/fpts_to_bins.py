@@ -10,7 +10,7 @@ y : np.ndarray of shape (n_rows, n_bins)
 bin_edges : np.ndarray of shape (n_bins + 1,)
 """
 n_bins = 50
-df = pd.read_parquet('synthetic+real_dataset.parquet')
+df = pd.read_parquet('../kinfold_simulations/feature_extraction/synthetic+real_dataset.parquet')
 arr_fpts = np.array([row for row in df['fpts']])
 # remove zeros for log behavior
 nonzero = arr_fpts[arr_fpts != 0]
@@ -31,7 +31,7 @@ for _, row in df.iterrows():
 # histogram as one object-dtype cell instead of trying to broadcast an array
 # into a single scalar cell via .loc, which is what raised the ValueError.
 df['dist'] = dists
-df.drop(columns=['fpts'], inplace=True)
+#df.drop(columns=['fpts'], inplace=True)
 df.to_parquet('synthetic+real_dataset.parquet', index=True)
 np.save('bin_edges.npy', bin_edges)
 

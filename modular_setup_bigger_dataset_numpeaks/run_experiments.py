@@ -45,7 +45,7 @@ parser.add_argument(
     "--model", 
     type=str, 
     required=True, 
-    choices=["glm_baseline", "mean_pool_mlp", "bilstm", "bilstm_rna_fm", "bilstm_rna_fm_proj", "embed_transformer", "embed_transformer_morelayers"],
+    choices=["glm_baseline", "mean_pool_mlp", "bilstm", "bilstm_rna_fm", "bilstm_rna_fm_proj", "embed_transformer", "embed_transformer_morelayers", "embed_transformer_nodropout"],
     help="Name of the model config to run"
 )
 parser.add_argument(
@@ -157,7 +157,21 @@ model_configs = {
         ),
         "epochs": 15,
         "lr": 1e-3,
-    }
+    },
+    "embed_transformer_nodropout": {
+        "build": lambda: ms.Embed_Transformer(
+            embedding_dim=640,
+            projection_dim=64,
+            num_heads=4,
+            num_layers=1,
+            dropout=0.0,
+            static_feature_size=static_dim,
+            output_size=output_dim,
+            mlp_hidden_size=64
+        ),
+        "epochs": 15,
+        "lr": 1e-3,
+    },
 }
 
 # Fetch chosen config

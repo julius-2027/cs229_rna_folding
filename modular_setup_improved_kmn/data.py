@@ -152,7 +152,7 @@ def prepare_data(
     val_size: float = 0.15,
     random_state: int = 42,
     bin_edges_path: str = None,
-    data_mask: np.ndarray= None,
+    data_mask: np.ndarray= None
 ) -> PreparedData:
     """
     Full pipeline: load -> build targets -> drop unused cols -> split -> scale -> encode.

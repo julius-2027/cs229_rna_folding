@@ -11,13 +11,17 @@ import matplotlib.pyplot as plt
 #     "results/metrics_rna_loc_v1.json"
 # ]
 
+# FILE_PATHS = [
+#     "results/metrics_bilstm_rna_fm_v1.json",
+#     "results/metrics_embed_transformer_v1.json",
+#     "results/metrics_rna_loc_v1.json",
+#     "results/metrics_glm_baseline_v1.json",
+#     "results/metrics_mean_pool_mlp_v1.json",
+#     "results/metrics_bilstm_v1.json"
+# ]
+
 FILE_PATHS = [
-    "results/metrics_bilstm_rna_fm_v1.json",
-    "results/metrics_embed_transformer_v1.json",
-    "results/metrics_rna_loc_v1.json",
-    "results/metrics_glm_baseline_v1.json",
-    "results/metrics_mean_pool_mlp_v1.json",
-    "results/metrics_bilstm_v1.json"
+    "results/metrics_bilstm_rna_fm_2peaksonly.json",
 ]
 
 def plot_learning_curves(json_paths):

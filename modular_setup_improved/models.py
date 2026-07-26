@@ -197,8 +197,8 @@ class DynamicEmbeddingHybridLSTM(BaseModel):
     def forward(self, sequence, structs, static_features, embeddings, lengths=None):
         x = embeddings
         use_packing = lengths is not None and not torch.all(lengths == lengths[0])
-        print("input shape:", x.shape, "lengths shape:", lengths.shape,
-      "lengths max:", lengths.max().item(), "lengths min:", lengths.min().item())
+    #     print("input shape:", x.shape, "lengths shape:", lengths.shape,
+    #   "lengths max:", lengths.max().item(), "lengths min:", lengths.min().item())
         if use_packing:
             packed = pack_padded_sequence(
                 x, lengths.cpu(), batch_first=True, enforce_sorted=False

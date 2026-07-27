@@ -20,12 +20,21 @@ import matplotlib.pyplot as plt
 #     "results/metrics_bilstm_v1.json"
 # ]
 
+# These all use regular, unweighted, binary cross-entropy loss
+# FILE_PATHS = [
+#     "results/metrics_bilstm_rna_fm_lengthbucket_2.json",
+#     "results/metrics_bilstm_rna_fm_v1.json",
+#     "results/metrics_bilstm_v1.json",
+#     "results/metrics_glm_baseline_v1.json",
+#     "results/metrics_mean_pool_mlp_v1.json"
+# ]
+
+# These all use weighted binary cross-entropy loss, with the minority class re-weighted
 FILE_PATHS = [
-    "results/metrics_bilstm_lengthbucket.json",
-    "results/metrics_bilstm_rna_fm_v1.json",
-    "results/metrics_bilstm_v1.json",
-    "results/metrics_glm_baseline_v1.json",
-    "results/metrics_mean_pool_mlp_v1.json"
+    "results/metrics_bilstm_rna_fm_v2.json",
+    "results/metrics_glm_baseline_v2.json",
+    "results/metrics_mean_pool_mlp_v2.json",
+    "results/metrics_bilstm_v2.json"
 ]
 
 def plot_learning_curves(json_paths):

@@ -10,6 +10,7 @@ total cumulative epoch count across runs.
 Run with:  python run_experiments.py --model bilstm --version v1
 """
 
+import math
 import numpy as np
 import argparse
 import json
@@ -90,6 +91,10 @@ output_dim = 1 # binary classification
 
 print(f"Train/Val/Test sizes: {len(data.train.sequences)}/{len(data.val.sequences)}/{len(data.test.sequences)}")
 print(f"Static feature dim: {static_dim} (Frequencies included: {is_glm}), output dim: {output_dim}")
+
+loss_weight_value = np.sum(data.train.targets == 0) / np.sum(data.train.targets == 1)
+print(f"Train set has (num negative examples (1 peak)) / (num positive examples (2 peaks)) = {loss_weight_value:.3g}")
+
 # ---------------------------------------------------------------------------
 # 3. Define the available models mapping
 # ---------------------------------------------------------------------------
@@ -180,17 +185,18 @@ set_seed(SEED)
 model = cfg["build"]().to(DEVICE)
 
 # Unique paths for this model + version combo
-checkpoint_path = f"checkpoints/best_{version_suffix}.pth"
+best_checkpoint_path = f"checkpoints/best_{version_suffix}.pth"
+last_checkpoint_path = f"checkpoints/last_{version_suffix}.pth"
 results_json_path = f"results/metrics_{version_suffix}.json"
 
 # Read historical data if it exists
 existing_history = {"train_loss": [], "val_loss": []}
 cumulative_epochs = 0
 
-if os.path.exists(checkpoint_path):
-    print(f"Found existing checkpoint at {checkpoint_path}. Loading weights to resume training...")
+if os.path.exists(last_checkpoint_path):
+    print(f"Found existing checkpoint at {last_checkpoint_path}. Loading weights to resume training...")
     try:
-        checkpoint = torch.load(checkpoint_path, map_location=DEVICE)
+        checkpoint = torch.load(last_checkpoint_path, map_location=DEVICE)
         if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
             model.load_state_dict(checkpoint["model_state_dict"])
         elif isinstance(checkpoint, dict):
@@ -231,17 +237,21 @@ train_loader = make_dataloader(data.train, batching=model.BATCHING, batch_size=3
 val_loader = make_dataloader(data.val, batching=model.BATCHING, batch_size=32, shuffle=False, embedding_dict=embeddings_dict)
 test_loader = make_dataloader(data.test, batching=model.BATCHING, batch_size=32, shuffle=False, embedding_dict=embeddings_dict)
 
-
 #model = cfg["build"]().to(DEVICE) # <-- overwrites the restored model!
+initial_best_val_loss = min(existing_history["val_loss"]) if existing_history["val_loss"] else math.inf
 new_history = train_model(
     model, train_loader, val_loader,
     epochs=cfg["epochs"], lr=cfg["lr"],
-    checkpoint_path=checkpoint_path, device=DEVICE,
+    best_checkpoint_path=best_checkpoint_path,
+    last_checkpoint_path=last_checkpoint_path,
+    device=DEVICE,
     verbose=True, print_every=10,
+    initial_best_val_loss=initial_best_val_loss,
+    loss_weight_value=loss_weight_value
 )
 
 # Load best checkpoint before final evaluation
-eval_result = evaluate_model(model, test_loader, device=DEVICE, checkpoint_path=checkpoint_path)
+eval_result = evaluate_model(model, test_loader, device=DEVICE, checkpoint_path=best_checkpoint_path)
 
 # ---------------------------------------------------------------------------
 # 6. Accumulate and Save Combined Results

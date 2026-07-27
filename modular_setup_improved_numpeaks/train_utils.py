@@ -73,14 +73,16 @@ def train_model(
     epochs: int = 100,
     lr: float = 1e-3,
     weight_decay: float = 1e-4,
-    checkpoint_path: str | None = None,
+    best_checkpoint_path: str | None = None,
+    last_checkpoint_path: str | None = None,
     device: str = "cpu",
     verbose: bool = True,
     print_every: int = 5,
     scheduler_patience: int = 5,
     scheduler_factor: float = 0.5,
     min_lr: float = 1e-6,
-    optimizer = None,
+    initial_best_val_loss: float = math.inf,
+    loss_weight_value: float = 1
 ):
     """
     Generic training loop. Loss is KLDivLoss since targets are soft
@@ -96,22 +98,33 @@ def train_model(
     """
     model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
-    if os.path.exists(checkpoint_path):
-        checkpoint = torch.load(checkpoint_path)
-        if (isinstance(checkpoint, dict) and "model_state_dict" in checkpoint):
-            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-    #criterion = nn.KLDivLoss(reduction="batchmean")
-    criterion = nn.BCEWithLogitsLoss(reduction="mean") # binary classification
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, mode="min", factor=scheduler_factor,
         patience=scheduler_patience, min_lr=min_lr,
     )
 
-    history = {"train_loss": [], "val_loss": []}
-    best_val_loss = math.inf
+    if os.path.exists(last_checkpoint_path):
+        checkpoint = torch.load(last_checkpoint_path)
+        if (isinstance(checkpoint, dict) and 'optimizer_state_dict' in checkpoint):
+            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            print('Optimizer successfully restored.')
+        if (isinstance(checkpoint, dict) and 'scheduler_state_dict' in checkpoint):
+            scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+            print('Scheduler successfully restored.')
+    
+    #criterion = nn.KLDivLoss(reduction="batchmean")
+    #criterion = nn.BCEWithLogitsLoss(reduction="mean") # binary classification
 
-    if checkpoint_path is not None:
-        Path(checkpoint_path).parent.mkdir(parents=True, exist_ok=True)
+    criterion = nn.BCEWithLogitsLoss(reduction="mean", pos_weight=torch.tensor([loss_weight_value])) # re-weight the minority class
+
+    history = {"train_loss": [], "val_loss": []}
+    best_val_loss = initial_best_val_loss
+
+    if best_checkpoint_path is not None:
+        Path(best_checkpoint_path).parent.mkdir(parents=True, exist_ok=True)
+
+    if last_checkpoint_path is not None:
+        Path(last_checkpoint_path).parent.mkdir(parents=True, exist_ok=True)
 
     for epoch in range(epochs):
         train_loss = _run_epoch(model, train_loader, criterion, optimizer, device)
@@ -124,14 +137,18 @@ def train_model(
         scheduler.step(val_loss)
         new_lr = optimizer.param_groups[0]["lr"]
 
+        checkpoint_dict = {'model_state_dict': model.state_dict(),
+                            'optimizer_state_dict': optimizer.state_dict(),
+                            'scheduler_state_dict': scheduler.state_dict()
+                            }
+        
+        torch.save(checkpoint_dict, last_checkpoint_path)
+
         improved = val_loss < best_val_loss
         if improved:
             best_val_loss = val_loss
-            if checkpoint_path is not None:
-                checkpoint_dict = {'model_state_dict': model.state_dict(),
-                                   'optimizer_state_dict': optimizer.state_dict()
-                                   }
-                torch.save(checkpoint_dict, checkpoint_path)
+            if best_checkpoint_path is not None:
+                torch.save(checkpoint_dict, best_checkpoint_path)
 
         if verbose:
             if new_lr != current_lr:

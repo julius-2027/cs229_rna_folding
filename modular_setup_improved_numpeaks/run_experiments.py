@@ -48,7 +48,7 @@ parser.add_argument(
     "--model", 
     type=str, 
     required=True, 
-    choices=["glm_baseline", "mean_pool_mlp", "bilstm", "bilstm_rna_fm", "bilstm_rna_fm_proj", "embed_transformer"],
+    choices=["glm_baseline", "mean_pool_mlp", "bilstm", "bilstm_rna_fm", "bilstm_rna_fm_proj", "embed_transformer", "rna_loc", "resnet"],
     help="Name of the model config to run"
 )
 parser.add_argument(
@@ -163,11 +163,18 @@ model_configs = {
             embedding_dim = 640, cnn_channels = 128,
             kernel_sizes = (3, 4, 5), lstm_hidden   = 128,
             lstm_layers = 1, num_heads = 8,
-            static_feature_size = 3, output_size = 50,
+            static_feature_size = 3, output_size = output_dim,
             mlp_hidden_size = 64, dropout = 0.3
         ),
         "epochs": 15,
         "lr": 1e-3,
+    },
+    "resnet": {
+        "build": lambda: ms.PairwiseMapResNet(embedding_dim = 640, projection_dim = 128, resnet_dim = 32,
+                 num_res_layers = 4, dropout = 0.3,
+                 static_feature_size = 3, output_size = output_dim, mlp_hidden_size = 64),
+                 "epochs": 15,
+                 "lr": 1e-3
     }
 }
 

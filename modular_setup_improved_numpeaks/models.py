@@ -25,7 +25,7 @@ from symtable import Class
 import torch
 import torch.nn as nn
 from torch.nn.utils.rnn import pack_padded_sequence
-
+from collections import OrderedDict
 
 class BaseModel(nn.Module):
     """Marker base class. Subclasses must set BATCHING and implement forward."""
@@ -426,5 +426,149 @@ class RNALocLM(BaseModel):
         combined = torch.cat([pooled, static_features], dim=-1)
         return self.fc(combined)
 
+class MyBasicResBlock(nn.Module):
+    """
+    Helper class for PairwiseMapResNet.
+    Code is modified from https://github.com/ml4bio/RNA-FM/blob/main/fm/downstream/pairwise_predictor/pairwise_concat.py#L5
+    """
 
-    
+    def __init__(
+        self,
+        inplanes: int,
+        planes: int,
+        stride: int = 1,
+        groups: int = 1,
+        dilation: int = 1,
+        dropout: float = 0.3
+    ) -> None:
+        super(MyBasicResBlock, self).__init__()
+
+        # Both self.conv1 and self.downsample layers downsample the input when stride != 1
+        #self.bn1 = nn.BatchNorm2d(inplanes)
+        self.norm1 = nn.LayerNorm(inplanes)
+        self.relu1 = nn.ReLU(inplace=False)
+        self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=3, stride=stride,
+                               padding=dilation, groups=groups, bias=False, dilation=dilation)
+        self.dropout = nn.Dropout(p=dropout)
+        self.relu2 = nn.ReLU(inplace=False)
+        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride,
+                               padding=dilation, groups=groups, bias=False, dilation=dilation)
+
+    def forward(self, x: torch.Tensor, mask: torch.Tensor = None) -> torch.Tensor:
+        identity = x # (B, C, L, L)
+
+        #out = self.bn1(x) # BatchNorm
+        
+        x = x.permute(0,2,3,1) # (B, L, L, C)
+        out = self.norm1(x) # LayerNorm
+        out = out.permute(0,3,1,2).contiguous() # (B, C, L, L)
+        
+        out = self.relu1(out)
+        
+        if mask is not None:
+            out = out * mask
+        out = self.conv1(out)
+        
+        out = self.dropout(out)
+        out = self.relu2(out)
+
+        if mask is not None:
+            out = out * mask
+        out = self.conv2(out)
+        
+        out = out + identity
+
+        return out
+
+class PairwiseMapResNet(BaseModel):
+    """
+    RNA-FM embeddings -> pairwise map of embeddings (outer concatenation) -> ResNet32 -> concat mean and max Pool
+    -> fully connected layer -> a single output logit to predict whether the folding time distribution has 1 peak or 2 peaks
+
+    Up to ResNet32, the architecture is the same as what the RNA-FM paper (Chen et al 2022) used to predict RNA secondary structure
+    Some code was heavily inspired / copied from the corresponding GitHub repo:
+    https://github.com/ml4bio/RNA-FM/blob/main/fm/downstream/pairwise_predictor/pairwise_concat.py#L5
+    """
+
+    BATCHING = "lengthbucket_padded"
+
+    def __init__(self, embedding_dim: int = 640, projection_dim: int = 128, resnet_dim: int = 32,
+                 num_res_layers: int = 32, dropout: float = 0.3,
+                 static_feature_size: int = 3, output_size: int = 50, mlp_hidden_size: int = 64):
+        super().__init__()
+        self.embedding_dim = embedding_dim
+        self.projection_dim = projection_dim
+        self.resnet_dim = resnet_dim
+
+        # Step 1: project embeddings to a lower dimension
+        self.input_proj = nn.Linear(embedding_dim, projection_dim)
+
+        # Step 3: resnet
+        self.first_layer = nn.Conv2d(2*projection_dim, resnet_dim, kernel_size=1)
+
+        self.res_layers = nn.ModuleList()
+        for i in range(num_res_layers):
+            dilation = pow(2, (i % 3)) # 1,2,4,1,2,4,1,2,4,...
+            self.res_layers.append(MyBasicResBlock(inplanes=resnet_dim, planes=resnet_dim,
+                                              dilation=dilation, dropout=dropout))
+
+        self.final_layer = nn.Conv2d(resnet_dim, resnet_dim, kernel_size=3, padding=1)
+        
+        # Step 5: Late Fusion Prediction Head (MLP)
+        mlp_input_size = 2*resnet_dim + static_feature_size
+        self.mlp = nn.Sequential(
+            nn.Linear(mlp_input_size, mlp_hidden_size),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(mlp_hidden_size, output_size),
+        )
+        
+    def forward(self, sequence, structs, static_features, embeddings, lengths=None):
+        if lengths is not None:
+            mask_1d = torch.arange(torch.amax(lengths)).unsqueeze(0) < lengths.unsqueeze(1) # (batch_size, max_seq_length)
+            mask_2d = torch.einsum('bi,bj->bij', mask_1d, mask_1d).unsqueeze(1).float() # (batch_size, 1, max_seq_length, max_seq_length)
+
+        x = embeddings # (batch_size, max_seq_len, embedding_dim)
+
+        # Step 1: project embeddings to a lower dimension
+        x = self.input_proj(x)
+        batch_size, max_seq_len, _ = x.shape # (batch_size, max_seq_len, projection_dim)
+
+        # Step 2: pairwise concatenation
+        x = x.unsqueeze(2).expand(batch_size, max_seq_len, max_seq_len, self.projection_dim)
+        x_T = x.permute(0, 2, 1, 3)
+        pairwise_concat = torch.cat([x, x_T], dim=3) # (batch_size, max_seq_len, max_seq_len, 2*projection_dim)
+        pairwise_concat = pairwise_concat.permute(0, 3, 1, 2) # (batch_size, 2*projection_dim, max_seq_len, max_seq_len)
+
+        # Step 3: resnet
+        if lengths is not None:
+            x_resnet = self.first_layer(pairwise_concat * mask_2d) # (batch_size, resnet_dim, max_seq_len, max_seq_len)
+            for res_layer in self.res_layers:
+                x_resnet = res_layer(x_resnet, mask_2d) # (batch_size, resnet_dim, max_seq_len, max_seq_len)
+            x_resnet = self.final_layer(x_resnet * mask_2d) # (batch_size, resnet_dim, max_seq_len, max_seq_len)
+        else:
+            x_resnet = self.first_layer(pairwise_concat) # (batch_size, resnet_dim, seq_len, seq_len)
+            for res_layer in self.res_layers:
+                x_resnet = res_layer(x_resnet) # (batch_size, resnet_dim, seq_len, seq_len)
+            x_resnet = self.final_layer(x_resnet) # (batch_size, resnet_dim, seq_len, seq_len)
+
+        # Step 4: mean pool and max pool
+        if lengths is not None:
+            # Sum up valid positions and divide by sequence lengths for a clean mean-pool
+            mean_pooled = (x_resnet * mask_2d).sum(dim=(2,3)) / lengths.unsqueeze(1).float()**2 # (batch_size, resnet_dim)
+
+            # Set non-valid positions to negative infinity for a clean max-pool
+            mask_2d_ninf = torch.zeros_like(mask_2d)
+            mask_2d_ninf[mask_2d == 0] = -torch.inf
+            max_pooled = (x_resnet + mask_2d_ninf).amax(dim=(2,3)) # (batch_size, resnet_dim)
+        else:
+            mean_pooled = x_resnet.mean(dim=(2,3)) # (batch_size, resnet_dim)
+            max_pooled = x_resnet.amax(dim=(2,3)) # (batch_size, resnet_dim)
+            
+        # Step 5: Late Fusion with Tabular Static Features
+        combined = torch.cat([mean_pooled, max_pooled, static_features], dim=-1) # (batch_size, 2*resnet_dim + static_feature_size)
+        
+        # Step 6: Map directly to output:
+        # Either 50 logits for the folding time distribution prediction
+        # or a single logit for 1 peak vs 2 peak classification
+        return self.mlp(combined)

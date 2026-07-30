@@ -31,6 +31,7 @@ import matplotlib.pyplot as plt
 
 # These all use weighted binary cross-entropy loss, with the minority class re-weighted
 FILE_PATHS = [
+    "results/metrics_resnet_v2.json",
     "results/metrics_bilstm_rna_fm_v2.json",
     "results/metrics_glm_baseline_v2.json",
     "results/metrics_mean_pool_mlp_v2.json",

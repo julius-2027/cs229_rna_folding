@@ -35,17 +35,7 @@ from torch.utils.data import Dataset, Sampler
 # Encoding maps (pluggable: swap these out for different representations)
 # ---------------------------------------------------------------------------
 
-chars = ['A', 'U', 'G', 'C', 'K', 'X', 'D', 'Y', 'N', 'R', 'S', 'H', 'M', 'W']
-
-# Create the one-hot dictionary
-vocab_size = len(chars)
-one_hot_dict = {
-    char: [1 if i == idx else 0 for i in range(vocab_size)] 
-    for idx, char in enumerate(chars)
-}
-
-#NUC_MAP = {"A": [1, 0, 0, 0], "U": [0, 1, 0, 0], "G": [0, 0, 1, 0], "C": [0, 0, 0, 1]}
-NUC_MAP = one_hot_dict
+NUC_MAP = {"A": [1, 0, 0, 0], "U": [0, 1, 0, 0], "G": [0, 0, 1, 0], "C": [0, 0, 0, 1]}
 STRUCT_MAP = {".": [1, 0, 0], "(": [0, 1, 0], ")": [0, 0, 1]}
 
 
@@ -67,59 +57,94 @@ def load_dataset(parquet_path: str) -> pd.DataFrame:
     return pd.read_parquet(parquet_path)
 
 
-# def build_histogram_targets(df: pd.DataFrame, n_bins: int = 50,
-#                              fpts_col: str = "fpts"):
-#     """
-#     Build normalized log-fpt histograms as soft targets.
-
-#     Returns
-#     -------
-#     y : np.ndarray of shape (n_rows, n_bins)
-#     bin_edges : np.ndarray of shape (n_bins + 1,)
-#     """
-#     arr_fpts = np.array([row for row in df[fpts_col]])
-#     # remove zeros for log behavior
-#     nonzero = arr_fpts[arr_fpts != 0]
-#     log_all = np.log(nonzero)
-#     # !!!!! objective changes slightly with dataset. once we have dataset compiled this should be fine.#
-#     bin_edges = np.linspace(log_all.min(), log_all.max(), n_bins + 1)
-
-#     y = np.zeros((df.shape[0], n_bins))
-#     for i, row in df.iterrows():
-#         fpts = row[fpts_col]
-#         nz = fpts[fpts != 0]
-#         logfpts = np.log(nz)
-#         hist, _ = np.histogram(logfpts, bin_edges, density=True)
-#         hist /= np.sum(hist)
-#         y[i] = hist
-#     return y, bin_edges
-
-def build_numpeaks_targets(df: pd.DataFrame, numpeaks_col: str = "num_peaks"):
+def build_histogram_targets(df: pd.DataFrame, n_bins: int = 50,
+                             fpts_col: str = "fpts", dist_col: str = "dist",
+                             bin_edges: np.ndarray = None):
     """
-    Build number of peaks (1 or 2) as binary classification targets.
+    Build (or load precomputed) normalized log-fpt histograms as soft targets.
+
+    If `dist_col` is already present (e.g. precomputed by test.py, which also
+    drops `fpts_col`), those histograms are used directly and `bin_edges`
+    must be supplied - it can't be recovered from histograms alone, so load
+    the bin_edges.npy saved alongside them. Otherwise falls back to computing
+    histograms on the fly from `fpts_col`, deriving bin_edges from the data
+    if not given.
 
     Returns
     -------
     y : np.ndarray of shape (n_rows, n_bins)
+    bin_edges : np.ndarray of shape (n_bins + 1,)
     """
-    # 1 peak is represnted by 0
-    # 2 peaks are represented by 1
-    y = np.array(df[numpeaks_col]) - 1
-    return y
+    if dist_col in df.columns:
+        if bin_edges is None:
+            raise ValueError(
+                f"'{dist_col}' is precomputed but no bin_edges were given - "
+                f"pass the bin_edges.npy saved alongside it (see prepare_data's "
+                f"bin_edges_path argument)."
+            )
+        y = np.stack(df[dist_col].to_numpy())
+        return y, bin_edges
 
-def keep_handpicked_columns(df: pd.DataFrame, handpicked_cols: list = None) -> pd.DataFrame:
+    if bin_edges is None:
+        raise ValueError('need bins precomputed.')
+        
+
+def keep_handpicked_columns(df: pd.DataFrame, handpicked_cols: list = None,
+                             fpts_col: str = "fpts", dist_col: str = "dist") -> pd.DataFrame:
     """Keep only the columns explicitly provided in handpicked_cols, plus mandatory keys."""
     if handpicked_cols is None:
         handpicked_cols = []
-        
+
     # Combine lists WITHOUT mutating the input handpicked_cols list in-place
-    mandatory_cols = ["sequence", "mfe_structure", "fpts"]
+    target_col = dist_col
+    mandatory_cols = ["sequence", "mfe_structure", target_col]
     all_needed_cols = list(set(handpicked_cols + mandatory_cols))
-    
+
+
     # Slice the dataframe to only include columns that actually exist in the data
     valid_cols = [col for col in all_needed_cols if col in df.columns]
-    
+
     return df[valid_cols].copy()
+
+
+def local_minima_feature_names(k: int) -> list:
+    """Column names produced by `build_local_minima_features` for a given k."""
+    names = []
+    for i in range(1, k + 1):
+        names += [f"min_{i}_rel_energy", f"min_{i}_bp_dist", f"min_{i}_tree_dist"]
+    return names
+
+
+def build_local_minima_features(df: pd.DataFrame, k: int = 10,
+                                 energy_col: str = "mfe") -> pd.DataFrame:
+    """
+    Derive a fixed-width numeric feature block from the per-sequence
+    suboptimal-folding landscape (min_1..min_k structures/energies/
+    distances), suitable for a plain MLP.
+
+    For each of the k lowest-energy local minima, emits:
+      - min_i_rel_energy: energy gap to the global MFE (min_i_energy - mfe),
+        which is comparable across sequences of different length/composition
+        unlike the raw energy value.
+      - min_i_bp_dist / min_i_tree_dist: structural distance to the MFE fold
+        (already numeric, so no need to parse the dot-bracket strings).
+
+    Raw `min_i_structure` strings are dropped - bp_dist/tree_dist already
+    summarize their structural difference numerically, and an MLP can't
+    consume a variable-content string directly.
+
+    Sequences with fewer than k local minima (n_local_minima < k) have NaN
+    in the higher-index columns; those are filled with 0. This is safe
+    because minima are rank-ordered by energy, so `n_local_minima` (already
+    a handpicked feature) tells the model which slots beyond that rank are
+    padding rather than a real (and coincidentally zero) minimum.
+    """
+    out = pd.DataFrame(index=df.index)
+    for i in range(1, k + 1):
+        out[f"min_{i}_rel_energy"] = (df[f"min_{i}_energy"] - df[energy_col]).fillna(0.0)
+        out[f"min_{i}_bp_dist"] = df[f"min_{i}_bp_dist"].fillna(0.0)
+        out[f"min_{i}_tree_dist"] = df[f"min_{i}_tree_dist"].fillna(0.0)
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -165,17 +190,37 @@ def prepare_data(
     n_bins: int = 50,
     test_size: float = 0.15,
     val_size: float = 0.15,
-    random_state: int = 42
+    random_state: int = 42,
+    bin_edges_path: str = None,
+    data_mask: np.ndarray= None,
+    local_minima_k: int = None,
 ) -> PreparedData:
     """
     Full pipeline: load -> build targets -> drop unused cols -> split -> scale -> encode.
 
     This is model-agnostic. Call once per experiment run (not once per model).
+
+    bin_edges_path: required when parquet_path's dataframe has a precomputed
+    'dist' column instead of raw 'fpts' (see test.py) - pass the bin_edges.npy
+    saved alongside it.
+
+    local_minima_k: if set, derives `local_minima_feature_names(local_minima_k)`
+    via `build_local_minima_features` and appends them to `handpicked_cols`, so
+    the suboptimal-folding landscape becomes part of the static feature vector.
     """
-    
+
     df = load_dataset(parquet_path)
-    #y, bin_edges = build_histogram_targets(df, n_bins=n_bins)
-    y = build_numpeaks_targets(df)
+    if data_mask is not None:
+        df = df[np.array(data_mask['num_peaks'])]
+    if local_minima_k is not None:
+        # Assign (not concat): bp_dist/tree_dist reuse the raw columns' names to
+        # overwrite the NaN-containing originals in place, rather than
+        # duplicating them under the same name.
+        df = df.copy()
+        df[local_minima_feature_names(local_minima_k)] = build_local_minima_features(df, k=local_minima_k)
+        handpicked_cols = list(handpicked_cols or []) + local_minima_feature_names(local_minima_k)
+    bin_edges = np.load(bin_edges_path) if bin_edges_path else None
+    y, bin_edges = build_histogram_targets(df, n_bins=n_bins, bin_edges=bin_edges)
     X = keep_handpicked_columns(df, handpicked_cols=handpicked_cols)
 
     #separate out train, test, val splits
@@ -200,7 +245,7 @@ def prepare_data(
         train=train_bundle,
         val=val_bundle,
         test=test_bundle,
-        bin_edges = None, # not needed for binary classification
+        bin_edges=bin_edges,
         scaler=scaler,
         handpicked_cols=handpicked_cols,
     )
@@ -216,14 +261,13 @@ class RNADataset(Dataset):
     targets. Works with either batching strategy below.
     """
 
-    def __init__(self, bundle: DataBundle, embedding_path: str = "modular_setup/fm-rna_embeddings.pt"):
+    def __init__(self, bundle: DataBundle, embedding_dict: dict = None):
         self.sequences = bundle.sequences
         self.structures = bundle.structures
         self.static_features = bundle.static_features
         self.targets = bundle.targets
         self.row_keys = bundle.row_keys
-        print(f"Loading RNA-FM embedding dictionary from {embedding_path}...")
-        self.embeddings_dict = torch.load(embedding_path)
+        self.embeddings_dict = embedding_dict
 
 
     def __len__(self):
@@ -337,14 +381,14 @@ def collate_padded(batch):
 # ---------------------------------------------------------------------------
 
 def make_dataloader(bundle: DataBundle, batching: str = "exact_length",
-                     batch_size: int = 32, shuffle: bool = True, embedding_path="fm-rna_embeddings_subset.pt"):
+                     batch_size: int = 32, shuffle: bool = True, embedding_dict: dict = None):
     """
     batching: "exact_length" -> ExactLengthBatchSampler + collate_exact_length
                                  (batch_size is ignored; batches = all items of
                                  a given length)
               "padded"       -> standard shuffled DataLoader + collate_padded
     """
-    dataset = RNADataset(bundle, embedding_path=embedding_path)
+    dataset = RNADataset(bundle, embedding_dict=embedding_dict)
     if batching == "exact_length":
         sampler = ExactLengthBatchSampler(dataset, shuffle=shuffle)
         return torch.utils.data.DataLoader(

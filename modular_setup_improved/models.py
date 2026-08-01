@@ -56,6 +56,36 @@ class GLMBaseline(BaseModel):
         return self.linear(static_features)
 
 
+class AllLocalMLP(BaseModel):
+    """
+    Plain MLP over the static (fixed-width, per-sequence) feature vector
+    only - ignores sequence/structure/embeddings entirely. Intended for
+    handpicked_cols sets that are already scalar per example, e.g. the GLM
+    columns plus the derived local-minima landscape features (rank-ordered
+    energy gaps / structural distances to the MFE fold; see
+    data.build_local_minima_features).
+    """
+
+    BATCHING = "padded"  # irrelevant here, but "padded" avoids exact-length bucketing overhead
+
+    def __init__(self, static_feature_size: int, output_size: int,
+                 hidden_size: int = 64, num_hidden_layers: int = 2, dropout: float = 0.1):
+        super().__init__()
+        layers = []
+        in_dim = static_feature_size
+        for _ in range(num_hidden_layers):
+            layers.append(nn.Linear(in_dim, hidden_size))
+            layers.append(nn.ReLU())
+            if dropout > 0:
+                layers.append(nn.Dropout(dropout))
+            in_dim = hidden_size
+        layers.append(nn.Linear(in_dim, output_size))
+        self.mlp = nn.Sequential(*layers)
+
+    def forward(self, sequence, structure, static_features, embeddings, lengths=None):
+        return self.mlp(static_features)
+
+
 class MeanPoolMLP(BaseModel):
     """
     A slightly richer variable-length-friendly baseline: mean-pools the
@@ -196,6 +226,70 @@ class DynamicEmbeddingHybridLSTM(BaseModel):
 
     def forward(self, sequence, structs, static_features, embeddings, lengths=None):
         x = embeddings
+        use_packing = lengths is not None and not torch.all(lengths == lengths[0])
+    #     print("input shape:", x.shape, "lengths shape:", lengths.shape,
+    #   "lengths max:", lengths.max().item(), "lengths min:", lengths.min().item())
+        if use_packing:
+            packed = pack_padded_sequence(
+                x, lengths.cpu(), batch_first=True, enforce_sorted=False
+            )
+            _, (hidden, cell) = self.lstm(packed)
+        else:
+            _, (hidden, cell) = self.lstm(x)
+
+        last_hidden = hidden[-1]
+        if self.bidirectional:
+            last_hidden_fwd = hidden[-2]
+            last_hidden = torch.cat([last_hidden_fwd, last_hidden], dim=-1)
+
+        combined = torch.cat([last_hidden, static_features], dim=-1)
+        return self.mlp(combined)
+class DynamicEmbeddingHybridLSTMwithStruct(BaseModel):
+    """
+    BiLSTM over the concatenated sequence+structure encoding, combined with
+    static handpicked features via an MLP head.
+
+    Works with EITHER batching strategy:
+      - "exact_length": pass lengths=None (or a uniform-length tensor) and the
+        LSTM runs over the full, unpadded batch directly.
+      - "padded": pass the `lengths` tensor and the model will
+        pack_padded_sequence internally so padding doesn't corrupt the
+        final hidden state.
+
+    Default BATCHING is "exact_length" because that's the more efficient
+    option when available (no padding/packing overhead), but it will run
+    correctly under "padded" too.
+    """
+
+    BATCHING = "padded"
+
+    def __init__(self, hidden_size: int, num_layers: int, static_feature_size: int,
+                 output_size: int, embedding_dim: int = 640, struct_dim: int = 3, mlp_hidden_size: int = 64,
+                 bidirectional: bool = True):
+        super().__init__()
+        self.bidirectional = bidirectional
+
+
+        self.lstm = nn.LSTM(
+            input_size=embedding_dim+struct_dim,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            batch_first=True,
+            bidirectional=bidirectional,
+        )
+
+        mlp_input_size = hidden_size + static_feature_size
+        if bidirectional:
+            mlp_input_size += hidden_size
+
+        self.mlp = nn.Sequential(
+            nn.Linear(mlp_input_size, mlp_hidden_size),
+            nn.ReLU(),
+            nn.Linear(mlp_hidden_size, output_size),
+        )
+
+    def forward(self, sequence, structs, static_features, embeddings, lengths=None):
+        x = torch.cat([structs, embeddings], dim=-1)
         use_packing = lengths is not None and not torch.all(lengths == lengths[0])
     #     print("input shape:", x.shape, "lengths shape:", lengths.shape,
     #   "lengths max:", lengths.max().item(), "lengths min:", lengths.min().item())

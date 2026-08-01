@@ -9,12 +9,15 @@ BASE_DIR = Path(__file__).resolve().parent
 # CONFIGURATION: Simply add or remove your JSON file paths here
 # ===========================================================================
 FILE_PATHS = [
-    BASE_DIR / "results" / "metrics_bilstm_rna_fm_v1.json",
     BASE_DIR / "results" / "metrics_embed_transformer_v1.json",
+    BASE_DIR / "results" / "metrics_bilstm_rna_fm_v1.json",
     BASE_DIR / "results" / "metrics_rna_loc_v1.json",
     BASE_DIR / "results" / "metrics_glm_baseline_v1.json",
     BASE_DIR / "results" / "metrics_mean_pool_mlp_v1.json",
-    BASE_DIR / "results" / "metrics_bilstm_v1.json"
+    BASE_DIR / "results" / "metrics_bilstm_v1.json",
+    BASE_DIR / "results" / "metrics_bilstm_v2.json",
+    BASE_DIR / "results" / "metrics_bilstm_rna_fm_with_struct_v1.json",
+    BASE_DIR / "results" / "metrics_all_local_mlp_v1.json",
 ]
 
 

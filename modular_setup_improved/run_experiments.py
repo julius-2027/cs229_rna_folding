@@ -35,6 +35,7 @@ EMBEDDING_PATH = BASE_DIR / "all_fm-rna_embeddings_filtered.pt"
 BIN_EDGES_PATH = BASE_DIR / "bin_edges.npy"
 SEED = 42
 N_BINS = 50
+LOCAL_MINIMA_K = 10  # how many rank-ordered local minima to featurize for all_local_MLP
 DEVICE = "cpu"  # change to "cuda" if available
 
 # ---------------------------------------------------------------------------
@@ -45,7 +46,7 @@ parser.add_argument(
     "--model", 
     type=str, 
     required=True, 
-    choices=["glm_baseline", "mean_pool_mlp", "bilstm", "bilstm_rna_fm", "bilstm_rna_fm_proj", "embed_transformer", "rna_loc"],
+    choices=["glm_baseline", "mean_pool_mlp", "bilstm", "bilstm_rna_fm", "bilstm_rna_fm_with_struct", "bilstm_rna_fm_proj", "embed_transformer", "rna_loc", "all_local_MLP"],
     help="Name of the model config to run"
 )
 parser.add_argument(
@@ -61,6 +62,7 @@ args = parser.parse_args()
 # ---------------------------------------------------------------------------
 set_seed(SEED)
 is_glm = (args.model == "glm_baseline")
+all_local_data = (args.model == 'all_local_MLP')
 handpicked_cols = None
 if is_glm:
     handpicked_cols = [
@@ -79,7 +81,11 @@ if MASK_PATH is not None:
 else:
     data_mask = None
 
-data = prepare_data(DATA_PATH, n_bins=N_BINS, random_state=SEED, handpicked_cols=handpicked_cols, bin_edges_path=BIN_EDGES_PATH, data_mask=data_mask)
+data = prepare_data(
+    DATA_PATH, n_bins=N_BINS, random_state=SEED, handpicked_cols=handpicked_cols,
+    bin_edges_path=BIN_EDGES_PATH, data_mask=data_mask,
+    local_minima_k=LOCAL_MINIMA_K if all_local_data else None,
+)
 static_dim = data.train.static_features.shape[1]
 output_dim = data.train.targets.shape[1]
 bin_centers = (data.bin_edges[:-1] + data.bin_edges[1:]) / 2
@@ -105,7 +111,7 @@ model_configs = {
             hidden_size=64, num_layers=1, static_feature_size=static_dim,
             output_size=output_dim, mlp_hidden_size=64, bidirectional=False,
         ),
-        "epochs": 15,
+        "epochs": 45,
         "lr": 1e-3,
     },
     "bilstm_rna_fm": {
@@ -121,6 +127,20 @@ model_configs = {
         "epochs": 15,
         "lr": 1e-3,
     },
+    "bilstm_rna_fm_with_struct": {
+            "build": lambda: ms.DynamicEmbeddingHybridLSTMwithStruct(
+                hidden_size=64, 
+                num_layers=1, 
+                struct_dim=3,  # Explicitly configured for structure features
+                static_feature_size=static_dim,
+                output_size=output_dim, 
+                embedding_dim=640, # Explicitly configured for RNA-FM dense vectors
+                mlp_hidden_size=64, 
+                bidirectional=True,
+            ),
+            "epochs": 15,
+            "lr": 1e-3,
+        },
     "bilstm_rna_fm_proj": {
         "build": lambda: ms.DynamicEmbeddingHybridLSTM_proj(
             hidden_size=64, 
@@ -159,7 +179,15 @@ model_configs = {
         ),
         "epochs": 15,
         "lr": 1e-3,
-    }
+    },
+    "all_local_MLP": {
+        "build": lambda: ms.AllLocalMLP(
+            static_feature_size=static_dim, output_size=output_dim,
+            hidden_size=64, num_hidden_layers=2, dropout=0.1,
+        ),
+        "epochs": 15,
+        "lr": 1e-3,
+    },
 }
 
 # Fetch chosen config

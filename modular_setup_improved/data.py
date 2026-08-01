@@ -107,6 +107,46 @@ def keep_handpicked_columns(df: pd.DataFrame, handpicked_cols: list = None,
     return df[valid_cols].copy()
 
 
+def local_minima_feature_names(k: int) -> list:
+    """Column names produced by `build_local_minima_features` for a given k."""
+    names = []
+    for i in range(1, k + 1):
+        names += [f"min_{i}_rel_energy", f"min_{i}_bp_dist", f"min_{i}_tree_dist"]
+    return names
+
+
+def build_local_minima_features(df: pd.DataFrame, k: int = 10,
+                                 energy_col: str = "mfe") -> pd.DataFrame:
+    """
+    Derive a fixed-width numeric feature block from the per-sequence
+    suboptimal-folding landscape (min_1..min_k structures/energies/
+    distances), suitable for a plain MLP.
+
+    For each of the k lowest-energy local minima, emits:
+      - min_i_rel_energy: energy gap to the global MFE (min_i_energy - mfe),
+        which is comparable across sequences of different length/composition
+        unlike the raw energy value.
+      - min_i_bp_dist / min_i_tree_dist: structural distance to the MFE fold
+        (already numeric, so no need to parse the dot-bracket strings).
+
+    Raw `min_i_structure` strings are dropped - bp_dist/tree_dist already
+    summarize their structural difference numerically, and an MLP can't
+    consume a variable-content string directly.
+
+    Sequences with fewer than k local minima (n_local_minima < k) have NaN
+    in the higher-index columns; those are filled with 0. This is safe
+    because minima are rank-ordered by energy, so `n_local_minima` (already
+    a handpicked feature) tells the model which slots beyond that rank are
+    padding rather than a real (and coincidentally zero) minimum.
+    """
+    out = pd.DataFrame(index=df.index)
+    for i in range(1, k + 1):
+        out[f"min_{i}_rel_energy"] = (df[f"min_{i}_energy"] - df[energy_col]).fillna(0.0)
+        out[f"min_{i}_bp_dist"] = df[f"min_{i}_bp_dist"].fillna(0.0)
+        out[f"min_{i}_tree_dist"] = df[f"min_{i}_tree_dist"].fillna(0.0)
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Splitting + scaling
 # ---------------------------------------------------------------------------
@@ -152,7 +192,8 @@ def prepare_data(
     val_size: float = 0.15,
     random_state: int = 42,
     bin_edges_path: str = None,
-    data_mask: np.ndarray= None
+    data_mask: np.ndarray= None,
+    local_minima_k: int = None,
 ) -> PreparedData:
     """
     Full pipeline: load -> build targets -> drop unused cols -> split -> scale -> encode.
@@ -162,11 +203,22 @@ def prepare_data(
     bin_edges_path: required when parquet_path's dataframe has a precomputed
     'dist' column instead of raw 'fpts' (see test.py) - pass the bin_edges.npy
     saved alongside it.
+
+    local_minima_k: if set, derives `local_minima_feature_names(local_minima_k)`
+    via `build_local_minima_features` and appends them to `handpicked_cols`, so
+    the suboptimal-folding landscape becomes part of the static feature vector.
     """
 
     df = load_dataset(parquet_path)
     if data_mask is not None:
         df = df[np.array(data_mask['num_peaks'])]
+    if local_minima_k is not None:
+        # Assign (not concat): bp_dist/tree_dist reuse the raw columns' names to
+        # overwrite the NaN-containing originals in place, rather than
+        # duplicating them under the same name.
+        df = df.copy()
+        df[local_minima_feature_names(local_minima_k)] = build_local_minima_features(df, k=local_minima_k)
+        handpicked_cols = list(handpicked_cols or []) + local_minima_feature_names(local_minima_k)
     bin_edges = np.load(bin_edges_path) if bin_edges_path else None
     y, bin_edges = build_histogram_targets(df, n_bins=n_bins, bin_edges=bin_edges)
     X = keep_handpicked_columns(df, handpicked_cols=handpicked_cols)

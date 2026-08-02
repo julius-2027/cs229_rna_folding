@@ -1,0 +1,94 @@
+{
+    "model": "glm_baseline",
+    "version": "20ep",
+    "epochs_per_trial": 20,
+    "n_trials": 20,
+    "best_value": 0.5060733227269977,
+    "best_params": {
+        "lr": 0.021368329072358756,
+        "weight_decay": 7.068974950624607e-06,
+        "batch_size": 128
+    },
+    "trials": [
+        {
+            "number": 0,
+            "value": 0.698767171543298,
+            "params": {
+                "lr": 0.00031489116479568613,
+                "weight_decay": 0.006351221010640704,
+                "batch_size": 16
+            },
+            "state": "TrialState.COMPLETE"
+        },
+        {
+            "number": 1,
+            "value": 1.448103229114298,
+            "params": {
+                "lr": 1.7073967431528103e-05,
+                "weight_decay": 0.0029154431891537554,
+                "batch_size": 128
+            },
+            "state": "TrialState.COMPLETE"
+        },
+        {
+            "number": 2,
+            "value": 0.5060733227269977,
+            "params": {
+                "lr": 0.021368329072358756,
+                "weight_decay": 7.068974950624607e-06,
+                "batch_size": 128
+            },
+            "state": "TrialState.COMPLETE"
+        },
+        {
+            "number": 3,
+            "value": 0.5560493844199923,
+            "params": {
+                "lr": 0.0005342937261279777,
+                "weight_decay": 1.461896279370496e-05,
+                "batch_size": 16
+            },
+            "state": "TrialState.COMPLETE"
+        },
+        {
+            "number": 4,
+            "value": 0.6549471289077852,
+            "params": {
+                "lr": 0.0006672367170464204,
+                "weight_decay": 0.0013826232179369874,
+                "batch_size": 64
+            },
+            "state": "TrialState.COMPLETE"
+        },
+        {
+            "number": 5,
+            "value": 0.5366624122147499,
+            "params": {
+                "lr": 0.0026926469100861782,
+                "weight_decay": 4.809461967501575e-06,
+                "batch_size": 64
+            },
+            "state": "TrialState.COMPLETE"
+        },
+        {
+            "number": 6,
+            "value": 1.0408135790126107,
+            "params": {
+                "lr": 0.00016536937182824412,
+                "weight_decay": 2.4586032763280077e-06,
+                "batch_size": 16
+            },
+            "state": "TrialState.PRUNED"
+        },
+        {
+            "number": 7,
+            "value": 1.4851710344682432,
+            "params": {
+                "lr": 1.3726318898045866e-05,
+                "weight_decay": 0.004337920697490943,
+                "batch_size": 32
+            },
+            "state": "TrialState.PRUNED"
+        }
+    ]
+}

@@ -1,0 +1,24 @@
+{
+    "model": "rna_loc",
+    "version": "20ep",
+    "epochs_per_trial": 20,
+    "n_trials": 20,
+    "best_value": 0.4989910071196661,
+    "best_params": {
+        "lr": 0.00031489116479568613,
+        "weight_decay": 0.006351221010640704,
+        "batch_size": 16
+    },
+    "trials": [
+        {
+            "number": 0,
+            "value": 0.4989910071196661,
+            "params": {
+                "lr": 0.00031489116479568613,
+                "weight_decay": 0.006351221010640704,
+                "batch_size": 16
+            },
+            "state": "TrialState.COMPLETE"
+        }
+    ]
+}

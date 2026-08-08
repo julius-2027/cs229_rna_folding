@@ -143,3 +143,9 @@ Saved tuning results to /Users/weberlin/src/cs229/cs229_rna_folding_clone/modula
 === Sat Aug  1 20:48:03 PDT 2026 Starting rna_loc ===
 [I 2026-08-01 20:48:11,177] A new study created in memory with name: no-name-2be5660b-37a4-42b2-bb85-756f7e1a70e1
 [I 2026-08-01 21:34:56,773] Trial 0 finished with value: 0.4989910071196661 and parameters: {'lr': 0.00031489116479568613, 'weight_decay': 0.006351221010640704, 'batch_size': 16}. Best is trial 0 with value: 0.4989910071196661.
+[I 2026-08-01 22:22:25,484] Trial 1 finished with value: 0.5941234517930218 and parameters: {'lr': 1.7073967431528103e-05, 'weight_decay': 0.0029154431891537554, 'batch_size': 128}. Best is trial 0 with value: 0.4989910071196661.
+[I 2026-08-01 23:12:29,307] Trial 2 finished with value: 0.9097807923771707 and parameters: {'lr': 0.021368329072358756, 'weight_decay': 7.068974950624607e-06, 'batch_size': 128}. Best is trial 0 with value: 0.4989910071196661.
+[I 2026-08-02 00:05:13,914] Trial 3 finished with value: 0.4514920680855112 and parameters: {'lr': 0.0005342937261279777, 'weight_decay': 1.461896279370496e-05, 'batch_size': 16}. Best is trial 3 with value: 0.4514920680855112.
+[I 2026-08-02 00:48:44,190] Trial 4 finished with value: 0.44771584166933753 and parameters: {'lr': 0.0006672367170464204, 'weight_decay': 0.0013826232179369874, 'batch_size': 64}. Best is trial 4 with value: 0.44771584166933753.
+[I 2026-08-02 01:31:46,880] Trial 5 finished with value: 0.4434221820706387 and parameters: {'lr': 0.0026926469100861782, 'weight_decay': 4.809461967501575e-06, 'batch_size': 64}. Best is trial 5 with value: 0.4434221820706387.
+[I 2026-08-02 02:31:19,315] Trial 6 finished with value: 0.4363477543256639 and parameters: {'lr': 0.00016536937182824412, 'weight_decay': 2.4586032763280077e-06, 'batch_size': 16}. Best is trial 6 with value: 0.4363477543256639.

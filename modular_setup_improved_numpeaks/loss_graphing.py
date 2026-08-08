@@ -31,6 +31,8 @@ import matplotlib.pyplot as plt
 
 # These all use weighted binary cross-entropy loss, with the minority class re-weighted
 FILE_PATHS = [
+    "results/metrics_rna_loc_v2.json",
+    "results/metrics_embed_transformer_v2.json",
     "results/metrics_resnet_v2.json",
     "results/metrics_bilstm_rna_fm_v2.json",
     "results/metrics_glm_baseline_v2.json",
@@ -91,7 +93,7 @@ def plot_learning_curves(json_paths):
         return
 
     # Graph Styling Parameters
-    plt.title("Model Convergence Comparison (KL-Divergence Loss)", fontsize=14, fontweight="bold", pad=15)
+    plt.title("Model Convergence Comparison (Weighted Cross-Entropy Loss)", fontsize=14, fontweight="bold", pad=15)
     plt.xlabel("Epochs", fontsize=12)
     plt.ylabel("Loss Magnitude", fontsize=12)
     plt.grid(True, linestyle=":", alpha=0.6)

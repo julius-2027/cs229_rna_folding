@@ -24,7 +24,7 @@ from symtable import Class
 
 import torch
 import torch.nn as nn
-from torch.nn.utils.rnn import pack_padded_sequence
+from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from collections import OrderedDict
 
 class BaseModel(nn.Module):
@@ -344,7 +344,8 @@ class RNALocLM(BaseModel):
     bins instead of a localization class.
     """
 
-    BATCHING = "padded"
+    #BATCHING = "padded"
+    BATCHING = "lengthbucket_padded"
 
     def __init__(self, embedding_dim: int = 640, cnn_channels: int = 128,
                  kernel_sizes: tuple = (3, 4, 5), lstm_hidden: int = 128,

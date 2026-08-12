@@ -8,12 +8,15 @@ from pathlib import Path
 # ===========================================================================
 BASE_DIR = Path(__file__).resolve().parent
 FILE_PATHS = [
-    BASE_DIR / "results" / "metrics_bilstm_rna_fm_v1.json",
-    BASE_DIR / "results" / "metrics_embed_transformer_v1.json",
-    BASE_DIR / "results" / "metrics_rna_loc_v1.json",
-    BASE_DIR / "results" / "metrics_glm_baseline_v1.json",
-    BASE_DIR / "results" / "metrics_mean_pool_mlp_v1.json",
-    BASE_DIR / "results" / "metrics_bilstm_v1.json"
+    BASE_DIR / "results" / "metrics_glm_baseline_best_params_20ep.json",
+    BASE_DIR / "results" / "metrics_mean_pool_mlp_best_params_20ep.json",
+    BASE_DIR / "results" / "metrics_all_local_MLP_best_params_20ep.json",
+    BASE_DIR / "results" / "metrics_bilstm_best_params_20ep.json",
+    BASE_DIR / "results" / "metrics_bilstm_rna_fm_best_params_20ep.json",
+    BASE_DIR / "results" / "metrics_bilstm_rna_fm_with_struct_best_params_20ep.json",
+    BASE_DIR / "results" / "metrics_embed_transformer_best_params_20ep.json",
+    BASE_DIR / "results" / "metrics_rna_loc_best_params_20ep.json",
+    
 ]
 
 def plot_learning_curves(json_paths):
@@ -79,7 +82,7 @@ def plot_learning_curves(json_paths):
     fig.text(0.5, 0.04, "Epochs", ha='center', fontsize=14)
     fig.text(0.04, 0.5, "Loss Magnitude", va='center', rotation='vertical', fontsize=14)
     plt.tight_layout(rect=[0.04, 0.03, 1, 0.95])
-    plt.show()
-
+    plt.savefig(BASE_DIR / "results" / "model_loss_comparison_by_model.png", dpi=300)
+    print(f"Saved loss comparison graph to {BASE_DIR / 'results' / 'model_loss_comparison_by_model.png'}")
 if __name__ == "__main__":
     plot_learning_curves(FILE_PATHS)

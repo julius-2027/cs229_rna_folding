@@ -1,0 +1,21 @@
+[I 2026-08-09 16:13:44,552] A new study created in memory with name: no-name-8e96b914-e91c-43fa-8762-989287fd04d4
+[I 2026-08-09 16:14:20,874] Trial 0 finished with value: 0.44872963276883376 and parameters: {'lr': 0.00031489116479568613, 'weight_decay': 0.006351221010640704, 'batch_size': 16}. Best is trial 0 with value: 0.44872963276883376.
+[I 2026-08-09 16:14:41,292] Trial 1 finished with value: 1.0873758807359724 and parameters: {'lr': 1.7073967431528103e-05, 'weight_decay': 0.0029154431891537554, 'batch_size': 128}. Best is trial 0 with value: 0.44872963276883376.
+[I 2026-08-09 16:15:09,340] Trial 2 finished with value: 0.3675287289653842 and parameters: {'lr': 0.021368329072358756, 'weight_decay': 7.068974950624607e-06, 'batch_size': 128}. Best is trial 2 with value: 0.3675287289653842.
+[I 2026-08-09 16:15:57,903] Trial 3 finished with value: 0.35931702282904854 and parameters: {'lr': 0.0005342937261279777, 'weight_decay': 1.461896279370496e-05, 'batch_size': 16}. Best is trial 3 with value: 0.35931702282904854.
+[I 2026-08-09 16:16:32,691] Trial 4 finished with value: 0.39807885434922613 and parameters: {'lr': 0.0006672367170464204, 'weight_decay': 0.0013826232179369874, 'batch_size': 64}. Best is trial 3 with value: 0.35931702282904854.
+[I 2026-08-09 16:17:09,048] Trial 5 finished with value: 0.3540075400062103 and parameters: {'lr': 0.0026926469100861782, 'weight_decay': 4.809461967501575e-06, 'batch_size': 64}. Best is trial 5 with value: 0.3540075400062103.
+[I 2026-08-09 16:17:58,799] Trial 6 pruned. 
+[I 2026-08-09 16:18:29,967] Trial 7 pruned. 
+[I 2026-08-09 16:19:13,464] Trial 8 finished with value: 0.3497129012303725 and parameters: {'lr': 0.0015375920235481753, 'weight_decay': 5.4880470007660465e-06, 'batch_size': 16}. Best is trial 8 with value: 0.3497129012303725.
+[I 2026-08-09 16:19:37,637] Trial 9 pruned. 
+[I 2026-08-09 16:20:07,185] Trial 10 pruned. 
+Train/val sizes: 7459 / 1317
+Static feature dim: 33, output dim: 50
+Loading RNA-FM embedding dictionary from /Users/weberlin/src/cs229/cs229_rna_folding_clone/modular_setup_improved_optimized/all_fm-rna_embeddings_filtered.pt...
+Early stopping: best val loss improved by less than 0.005 over the last 5 trials.
+
+Best val loss: 0.3497
+Best params: {'lr': 0.0015375920235481753, 'weight_decay': 5.4880470007660465e-06, 'batch_size': 16}
+
+Saved tuning results to /Users/weberlin/src/cs229/cs229_rna_folding_clone/modular_setup_improved_optimized/tune_results/tune_results_all_local_MLP_v1.json

@@ -1,0 +1,21 @@
+Train/Val/Test sizes: 1756/310/365
+
+==================== Running: all_local_MLP (best_params_20ep) lr=0.0015375920235481753 weight_decay=5.4880470007660465e-06 batch_size=16 ====================
+Loading RNA-FM embedding dictionary from /Users/weberlin/src/cs229/cs229_rna_folding_clone/modular_setup_improved_optimized/all_fm-rna_embeddings_filtered.pt...
+Epoch 1 | Validation loss improved -> saved checkpoint
+Epoch 1 | Train: 0.6462 | Val: 0.4662 | LR: 1.54e-03
+Epoch 2 | Validation loss improved -> saved checkpoint
+Epoch 3 | Validation loss improved -> saved checkpoint
+Epoch 4 | Validation loss improved -> saved checkpoint
+Epoch 5 | Validation loss improved -> saved checkpoint
+Epoch 7 | Validation loss improved -> saved checkpoint
+Epoch 8 | Validation loss improved -> saved checkpoint
+Epoch 11 | Train: 0.3641 | Val: 0.3844 | LR: 1.54e-03
+Epoch 14 | LR dropped: 1.54e-03 -> 7.69e-04
+Epoch 15 | Validation loss improved -> saved checkpoint
+Epoch 17 | Validation loss improved -> saved checkpoint
+Epoch 20 | Train: 0.3317 | Val: 0.3778 | LR: 7.69e-04
+
+Results saved to results/metrics_all_local_MLP_best_params_20ep.json
+        model          version  epochs       lr  weight_decay  batch_size  final_train_loss  final_val_loss  best_val_loss  test_js_mean  test_js_median
+all_local_MLP best_params_20ep      20 0.001538      0.000005          16           0.33174        0.377756       0.374122      0.302089        0.295134

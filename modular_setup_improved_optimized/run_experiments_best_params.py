@@ -23,7 +23,7 @@ os.makedirs("checkpoints", exist_ok=True)
 os.makedirs("results", exist_ok=True)
 
 BASE_DIR = Path(__file__).resolve().parent
-MASK_PATH = BASE_DIR / "mask_2peaks.parquet"
+MASK_PATH = None
 DATA_PATH = BASE_DIR / "synthetic+real_dataset_filtered_numpeaks.parquet"
 EMBEDDING_PATH = BASE_DIR / "all_fm-rna_embeddings_filtered.pt"
 BIN_EDGES_PATH = BASE_DIR / "bin_edges.npy"
@@ -90,7 +90,7 @@ def build_model_configs(static_dim, output_dim):
                 bidirectional=True,
             ),
         },
-        "embed_transformer": {
+        "transformer_rna_fm": {
             "build": lambda: ms.Embed_Transformer(
                 embedding_dim=640,
                 projection_dim=64,

@@ -1,5 +1,5 @@
 {
-    "model": "all_local_MLP",
+    "model": "all_local_mlp",
     "version": "v2",
     "k": 5,
     "epochs": 15,

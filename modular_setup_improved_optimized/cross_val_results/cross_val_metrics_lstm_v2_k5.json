@@ -1,5 +1,5 @@
 {
-    "model": "bilstm",
+    "model": "lstm",
     "version": "v2",
     "k": 5,
     "epochs": 45,

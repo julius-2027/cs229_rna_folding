@@ -15,7 +15,7 @@ histories are then aggregated across folds (mean +/- std at each epoch) and
 plotted with error bars, since a single train/val split can make a model
 look better or worse than it really is just by chance.
 
-Run with:  python cross_val.py --model bilstm --version v1 --k 5
+Run with:  python cross_val.py --model lstm --version v1 --k 5
 """
 
 import argparse
@@ -50,7 +50,7 @@ BIN_EDGES_PATH = BASE_DIR / "bin_edges.npy"
 OUTPUT_DIR = BASE_DIR / "cross_val_results"
 SEED = 42
 N_BINS = 50
-LOCAL_MINIMA_K = 10  # how many rank-ordered local minima to featurize for all_local_MLP
+LOCAL_MINIMA_K = 10  # how many rank-ordered local minima to featurize for all_local_mlp
 DEVICE = "cpu"  # change to "cuda" if available
 
 
@@ -119,7 +119,7 @@ parser.add_argument(
     "--model",
     type=str,
     required=True,
-    choices=["glm_baseline", "mean_pool_mlp", "bilstm", "bilstm_rna_fm", "bilstm_rna_fm_with_struct", "bilstm_rna_fm_proj", "embed_transformer", "rna_loc", "all_local_MLP"],
+    choices=["glm_baseline", "mean_pool_mlp", "lstm", "lstm_rna_fm", "struct_lstm_rna_fm", "bilstm_rna_fm_proj", "transformer_rna_fm", "loc_rna_fm", "all_local_mlp"],
     help="Name of the model config to run"
 )
 parser.add_argument(
@@ -144,7 +144,7 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 # ---------------------------------------------------------------------------
 set_seed(SEED)
 is_glm = (args.model == "glm_baseline")
-all_local_data = (args.model == "all_local_MLP")
+all_local_data = (args.model == "all_local_mlp")
 if is_glm:
     handpicked_cols = [
         "mfe", "n_local_minima", "gc_content",
@@ -192,7 +192,7 @@ model_configs = {
         "epochs": 15,
         "lr": 1e-3,
     },
-    "bilstm": {
+    "lstm": {
         "build": lambda: ms.DynamicHybridLSTM(
             hidden_size=64, num_layers=1, static_feature_size=static_dim,
             output_size=output_dim, mlp_hidden_size=64, bidirectional=False,
@@ -200,7 +200,7 @@ model_configs = {
         "epochs": 45,
         "lr": 1e-3,
     },
-    "bilstm_rna_fm": {
+    "lstm_rna_fm": {
         "build": lambda: ms.DynamicEmbeddingHybridLSTM(
             hidden_size=64,
             num_layers=1,
@@ -213,7 +213,7 @@ model_configs = {
         "epochs": 15,
         "lr": 1e-3,
     },
-    "bilstm_rna_fm_with_struct": {
+    "struct_lstm_rna_fm": {
         "build": lambda: ms.DynamicEmbeddingHybridLSTMwithStruct(
             hidden_size=64,
             num_layers=1,
@@ -241,7 +241,7 @@ model_configs = {
         "epochs": 15,
         "lr": 1e-3,
     },
-    "embed_transformer": {
+    "transformer_rna_fm": {
         "build": lambda: ms.Embed_Transformer(
             embedding_dim=640,
             projection_dim=64,
@@ -255,7 +255,7 @@ model_configs = {
         "epochs": 15,
         "lr": 1e-3,
     },
-    "rna_loc": {
+    "loc_rna_fm": {
         "build": lambda: ms.RNALocLM(
             embedding_dim=640, cnn_channels=128,
             kernel_sizes=(3, 4, 5), lstm_hidden=128,
@@ -266,7 +266,7 @@ model_configs = {
         "epochs": 15,
         "lr": 1e-3,
     },
-    "all_local_MLP": {
+    "all_local_mlp": {
         "build": lambda: ms.AllLocalMLP(
             static_feature_size=static_dim, output_size=output_dim,
             hidden_size=64, num_hidden_layers=2, dropout=0.1,

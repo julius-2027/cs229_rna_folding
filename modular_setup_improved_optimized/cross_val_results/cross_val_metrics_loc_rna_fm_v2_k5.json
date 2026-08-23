@@ -1,5 +1,5 @@
 {
-    "model": "rna_loc",
+    "model": "loc_rna_fm",
     "version": "v2",
     "k": 5,
     "epochs": 15,

@@ -1,0 +1,92 @@
+Loading RNA-FM embedding dictionary from /Users/weberlin/src/cs229/cs229_rna_folding_clone/modular_setup_improved_optimized/all_fm-rna_embeddings_filtered.pt...
+
+==================== glm_baseline ====================
+Full dataset size: 10325 | static_dim=23 output_dim=50
+  Fold 1/5 | best val KL: 0.5105
+  Fold 2/5 | best val KL: 0.5260
+  Fold 3/5 | best val KL: 0.5108
+  Fold 4/5 | best val KL: 0.5065
+  Fold 5/5 | best val KL: 0.5232
+  CV KL mean +/- std: 0.5154 +/- 0.0077
+  Test KL (final model): 0.5205
+
+==================== mean_pool_mlp ====================
+Full dataset size: 10325 | static_dim=3 output_dim=50
+  Fold 1/5 | best val KL: 0.3480
+  Fold 2/5 | best val KL: 0.3538
+  Fold 3/5 | best val KL: 0.3671
+  Fold 4/5 | best val KL: 0.3507
+  Fold 5/5 | best val KL: 0.3510
+  CV KL mean +/- std: 0.3541 +/- 0.0067
+  Test KL (final model): 0.3426
+
+==================== all_local_mlp ====================
+Full dataset size: 10325 | static_dim=33 output_dim=50
+  Fold 1/5 | best val KL: 0.3486
+  Fold 2/5 | best val KL: 0.3563
+  Fold 3/5 | best val KL: 0.3700
+  Fold 4/5 | best val KL: 0.3538
+  Fold 5/5 | best val KL: 0.3503
+  CV KL mean +/- std: 0.3558 +/- 0.0076
+  Test KL (final model): 0.3505
+
+==================== lstm ====================
+Full dataset size: 10325 | static_dim=3 output_dim=50
+  Fold 1/5 | best val KL: 0.3144
+  Fold 2/5 | best val KL: 0.3220
+  Fold 3/5 | best val KL: 0.3441
+  Fold 4/5 | best val KL: 0.3122
+  Fold 5/5 | best val KL: 0.3166
+  CV KL mean +/- std: 0.3219 +/- 0.0116
+  Test KL (final model): 0.3115
+
+==================== lstm_rna_fm ====================
+Full dataset size: 10325 | static_dim=3 output_dim=50
+  Fold 1/5 | best val KL: 0.4179
+  Fold 2/5 | best val KL: 0.4280
+  Fold 3/5 | best val KL: 0.4258
+  Fold 4/5 | best val KL: 0.4171
+  Fold 5/5 | best val KL: 0.4174
+  CV KL mean +/- std: 0.4212 +/- 0.0047
+  Test KL (final model): 0.3933
+
+==================== struct_lstm_rna_fm ====================
+Full dataset size: 10325 | static_dim=3 output_dim=50
+  Fold 1/5 | best val KL: 0.3292
+  Fold 2/5 | best val KL: 0.3393
+  Fold 3/5 | best val KL: 0.3471
+  Fold 4/5 | best val KL: 0.3314
+  Fold 5/5 | best val KL: 0.3366
+  CV KL mean +/- std: 0.3367 +/- 0.0063
+  Test KL (final model): 0.3196
+
+==================== transformer_rna_fm ====================
+Full dataset size: 10325 | static_dim=3 output_dim=50
+  Fold 1/5 | best val KL: 0.4474
+  Fold 2/5 | best val KL: 0.4539
+  Fold 3/5 | best val KL: 0.4393
+  Fold 4/5 | best val KL: 0.4532
+  Fold 5/5 | best val KL: 0.4485
+  CV KL mean +/- std: 0.4484 +/- 0.0052
+  Test KL (final model): 0.4537
+
+==================== loc_rna_fm ====================
+Full dataset size: 10325 | static_dim=3 output_dim=50
+  Fold 1/5 | best val KL: 0.4504
+  Fold 2/5 | best val KL: 0.4561
+  Fold 3/5 | best val KL: 0.4399
+  Fold 4/5 | best val KL: 0.4536
+  Fold 5/5 | best val KL: 0.4517
+  CV KL mean +/- std: 0.4503 +/- 0.0056
+  Test KL (final model): 0.4625
+
+Wrote 8 rows to /Users/weberlin/src/cs229/cs229_rna_folding_clone/modular_setup_improved_optimized/cross_val_results/cross_val_final_with_test.csv
+             model  cv_kl_mean  cv_kl_std  test_kl
+      glm_baseline    0.515402   0.007707 0.520471
+     mean_pool_mlp    0.354136   0.006729 0.342638
+     all_local_mlp    0.355821   0.007580 0.350531
+              lstm    0.321858   0.011595 0.311528
+       lstm_rna_fm    0.421232   0.004706 0.393284
+struct_lstm_rna_fm    0.336731   0.006310 0.319604
+transformer_rna_fm    0.448449   0.005227 0.453715
+        loc_rna_fm    0.450314   0.005573 0.462516

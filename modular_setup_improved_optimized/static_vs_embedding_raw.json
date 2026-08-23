@@ -1,0 +1,42 @@
+[
+    {
+        "model": "lstm_rna_fm",
+        "pct_static": 9.031695864508883,
+        "pct_embedding": 90.96830413549111,
+        "pct_structure": 0.0,
+        "static_mass": 57.01395034790039,
+        "struct_mass": 0.0,
+        "embed_mass": 574.251220703125,
+        "n_samples": 64
+    },
+    {
+        "model": "struct_lstm_rna_fm",
+        "pct_static": 1.1922338372586894,
+        "pct_embedding": 92.75451952004985,
+        "pct_structure": 6.053246642691456,
+        "static_mass": 14.916757583618164,
+        "struct_mass": 75.73582458496094,
+        "embed_mass": 1160.5078125,
+        "n_samples": 64
+    },
+    {
+        "model": "transformer_rna_fm",
+        "pct_static": 2.107052050858883,
+        "pct_embedding": 97.89294794914112,
+        "pct_structure": 0.0,
+        "static_mass": 12.57476806640625,
+        "struct_mass": 0.0,
+        "embed_mass": 584.2196044921875,
+        "n_samples": 64
+    },
+    {
+        "model": "loc_rna_fm",
+        "pct_static": 0.7644501703311252,
+        "pct_embedding": 99.23554982966887,
+        "pct_structure": 0.0,
+        "static_mass": 5.385951042175293,
+        "struct_mass": 0.0,
+        "embed_mass": 699.1663208007812,
+        "n_samples": 64
+    }
+]

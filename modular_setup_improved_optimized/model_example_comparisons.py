@@ -30,12 +30,12 @@ MODELS_TO_PLOT = {
     "BiLSTM (RNA-FM)": (
         ms.DynamicEmbeddingHybridLSTM, 
         {"hidden_size": 64, "num_layers": 1, "static_feature_size": 3, "output_size": 50, "embedding_dim": 640, "mlp_hidden_size": 64, "bidirectional": True},
-        "checkpoints/best_bilstm_rna_fm_v1.pth"
+        "checkpoints/best_lstm_rna_fm_v1.pth"
     ),
     "Transformer (RNA-FM)": (
         ms.Embed_Transformer,
         {"embedding_dim": 640, "projection_dim": 64, "num_heads": 4, "num_layers": 1, "dropout": 0.5, "static_feature_size": 3, "output_size": 50, "mlp_hidden_size": 64},
-        "checkpoints/best_embed_transformer_v1.pth"
+        "checkpoints/best_transformer_rna_fm_v1.pth"
     ),
 }
 

@@ -1,5 +1,5 @@
 {
-    "model": "bilstm_rna_fm",
+    "model": "lstm_rna_fm",
     "version": "best_params_20ep",
     "epochs": 20,
     "lr": 0.021368329072358756,

@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 plt.rcParams['font.size'] = 20
 
-models = ["glm_baseline", "mean_pool_mlp", "bilstm", "bilstm_rna_fm", "bilstm_rna_fm_with_struct", "bilstm_rna_fm_proj", "embed_transformer", "rna_loc", "all_local_MLP"]
+models = ["glm_baseline", "mean_pool_mlp", "lstm", "lstm_rna_fm", "struct_lstm_rna_fm", "bilstm_rna_fm_proj", "transformer_rna_fm", "loc_rna_fm", "all_local_mlp"]
 
 for i in range(len(models)):
     model = models[i]
@@ -26,7 +26,7 @@ for i in range(len(models)):
                  linestyle='--', color='C'+str(i))
     
     model_label = model
-    if model=='bilstm':
+    if model=='lstm':
         model_label='lstm'
 
     plt.errorbar(np.arange(1, epochs+1), results_dict['val_loss_mean'][:epochs],

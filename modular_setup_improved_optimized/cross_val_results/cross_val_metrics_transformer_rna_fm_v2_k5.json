@@ -1,5 +1,5 @@
 {
-    "model": "embed_transformer",
+    "model": "transformer_rna_fm",
     "version": "v2",
     "k": 5,
     "epochs": 15,

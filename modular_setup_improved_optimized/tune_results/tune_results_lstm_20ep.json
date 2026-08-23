@@ -1,5 +1,5 @@
 {
-    "model": "bilstm",
+    "model": "lstm",
     "version": "20ep",
     "epochs_per_trial": 20,
     "n_trials": 20,

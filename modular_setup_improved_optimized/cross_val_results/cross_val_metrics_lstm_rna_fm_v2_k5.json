@@ -1,5 +1,5 @@
 {
-    "model": "bilstm_rna_fm",
+    "model": "lstm_rna_fm",
     "version": "v2",
     "k": 5,
     "epochs": 15,

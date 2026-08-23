@@ -10,12 +10,12 @@ BASE_DIR = Path(__file__).resolve().parent
 FILE_PATHS = [
     BASE_DIR / "results" / "metrics_glm_baseline_best_params_20ep.json",
     BASE_DIR / "results" / "metrics_mean_pool_mlp_best_params_20ep.json",
-    BASE_DIR / "results" / "metrics_all_local_MLP_best_params_20ep.json",
-    BASE_DIR / "results" / "metrics_bilstm_best_params_20ep.json",
-    BASE_DIR / "results" / "metrics_bilstm_rna_fm_best_params_20ep.json",
-    BASE_DIR / "results" / "metrics_bilstm_rna_fm_with_struct_best_params_20ep.json",
-    BASE_DIR / "results" / "metrics_embed_transformer_best_params_20ep.json",
-    BASE_DIR / "results" / "metrics_rna_loc_best_params_20ep.json",
+    BASE_DIR / "results" / "metrics_all_local_mlp_best_params_20ep.json",
+    BASE_DIR / "results" / "metrics_lstm_best_params_20ep.json",
+    BASE_DIR / "results" / "metrics_lstm_rna_fm_best_params_20ep.json",
+    BASE_DIR / "results" / "metrics_struct_lstm_rna_fm_best_params_20ep.json",
+    BASE_DIR / "results" / "metrics_transformer_rna_fm_best_params_20ep.json",
+    BASE_DIR / "results" / "metrics_loc_rna_fm_best_params_20ep.json",
     
 ]
 

@@ -1,0 +1,10 @@
+cross_val_kl,test_kl,model
+0.5154 +/- 0.0077,0.5205,glm_baseline
+0.3541 +/- 0.0067,0.3426,mean_pool_mlp
+0.3558 +/- 0.0076,0.3505,all_local_mlp
+0.3219 +/- 0.0116,0.3115,lstm
+0.4212 +/- 0.0047,0.3933,lstm_rna_fm
+0.3367 +/- 0.0063,0.3196,struct_lstm_rna_fm
+0.4484 +/- 0.0052,0.4537,transformer_rna_fm
+0.4503 +/- 0.0056,0.4625,loc_rna_fm
+0.9112 +/- 0.0165,0.9397,naive_baseline

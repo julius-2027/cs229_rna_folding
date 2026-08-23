@@ -13,7 +13,7 @@ split (data.prepare_data) rather than full k-fold, since that gives more
 trials for the same compute budget; re-verify the winning config with
 cross_val.py once you have it.
 
-Run with:  python tune.py --model bilstm --trials 20 --epochs 10
+Run with:  python tune.py --model lstm --trials 20 --epochs 10
 """
 
 import argparse
@@ -50,14 +50,14 @@ def build_model_configs(static_dim, output_dim):
             "build": lambda: ms.MeanPoolMLP(static_dim, output_dim, hidden_size=64),
             "epochs": 15,
         },
-        "bilstm": {
+        "lstm": {
             "build": lambda: ms.DynamicHybridLSTM(
                 hidden_size=64, num_layers=1, static_feature_size=static_dim,
                 output_size=output_dim, mlp_hidden_size=64, bidirectional=False,
             ),
             "epochs": 45,
         },
-        "bilstm_rna_fm": {
+        "lstm_rna_fm": {
             "build": lambda: ms.DynamicEmbeddingHybridLSTM(
                 hidden_size=64, num_layers=1, static_feature_size=static_dim,
                 output_size=output_dim, embedding_dim=640, mlp_hidden_size=64,
@@ -65,7 +65,7 @@ def build_model_configs(static_dim, output_dim):
             ),
             "epochs": 15,
         },
-        "bilstm_rna_fm_with_struct": {
+        "struct_lstm_rna_fm": {
             "build": lambda: ms.DynamicEmbeddingHybridLSTMwithStruct(
                 hidden_size=64, num_layers=1, struct_dim=3, static_feature_size=static_dim,
                 output_size=output_dim, embedding_dim=640, mlp_hidden_size=64,
@@ -81,7 +81,7 @@ def build_model_configs(static_dim, output_dim):
             ),
             "epochs": 15,
         },
-        "embed_transformer": {
+        "transformer_rna_fm": {
             "build": lambda: ms.Embed_Transformer(
                 embedding_dim=640, projection_dim=64, num_heads=4, num_layers=1,
                 dropout=0.5, static_feature_size=static_dim, output_size=output_dim,
@@ -89,7 +89,7 @@ def build_model_configs(static_dim, output_dim):
             ),
             "epochs": 15,
         },
-        "rna_loc": {
+        "loc_rna_fm": {
             "build": lambda: ms.RNALocLM(
                 embedding_dim=640, cnn_channels=128, kernel_sizes=(3, 4, 5),
                 lstm_hidden=128, lstm_layers=1, num_heads=8,
@@ -97,7 +97,7 @@ def build_model_configs(static_dim, output_dim):
             ),
             "epochs": 15,
         },
-        "all_local_MLP": {
+        "all_local_mlp": {
             "build": lambda: ms.AllLocalMLP(
                 static_feature_size=static_dim, output_size=output_dim,
                 hidden_size=64, num_hidden_layers=2, dropout=0.1,
@@ -111,8 +111,8 @@ def main():
     parser = argparse.ArgumentParser(description="Tune lr/weight_decay/batch_size for an RNA folding model.")
     parser.add_argument(
         "--model", type=str, required=True,
-        choices=["glm_baseline", "mean_pool_mlp", "bilstm", "bilstm_rna_fm", "bilstm_rna_fm_with_struct",
-                 "bilstm_rna_fm_proj", "embed_transformer", "rna_loc", "all_local_MLP"],
+        choices=["glm_baseline", "mean_pool_mlp", "lstm", "lstm_rna_fm", "struct_lstm_rna_fm",
+                 "bilstm_rna_fm_proj", "transformer_rna_fm", "loc_rna_fm", "all_local_mlp"],
         help="Name of the model config to tune",
     )
     parser.add_argument("--trials", type=int, default=20, help="Max number of Optuna trials")
@@ -126,7 +126,7 @@ def main():
     set_seed(SEED)
 
     is_glm = (args.model == "glm_baseline")
-    all_local_data = (args.model == "all_local_MLP")
+    all_local_data = (args.model == "all_local_mlp")
     if is_glm:
         handpicked_cols = [
             "mfe", "n_local_minima", "gc_content",

@@ -1,5 +1,5 @@
 {
-    "model": "all_local_MLP",
+    "model": "all_local_mlp",
     "version": "best_params_20ep",
     "epochs": 20,
     "lr": 0.0015375920235481753,

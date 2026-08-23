@@ -61,13 +61,13 @@ def build_model_configs(static_dim, output_dim):
         "mean_pool_mlp": {
             "build": lambda: ms.MeanPoolMLP(static_dim, output_dim, hidden_size=64),
         },
-        "bilstm": {
+        "lstm": {
             "build": lambda: ms.DynamicHybridLSTM(
                 hidden_size=64, num_layers=1, static_feature_size=static_dim,
                 output_size=output_dim, mlp_hidden_size=64, bidirectional=False,
             ),
         },
-        "bilstm_rna_fm": {
+        "lstm_rna_fm": {
             "build": lambda: ms.DynamicEmbeddingHybridLSTM(
                 hidden_size=64,
                 num_layers=1,
@@ -78,7 +78,7 @@ def build_model_configs(static_dim, output_dim):
                 bidirectional=True,
             ),
         },
-        "bilstm_rna_fm_with_struct": {
+        "struct_lstm_rna_fm": {
             "build": lambda: ms.DynamicEmbeddingHybridLSTMwithStruct(
                 hidden_size=64,
                 num_layers=1,
@@ -102,7 +102,7 @@ def build_model_configs(static_dim, output_dim):
                 mlp_hidden_size=64
             ),
         },
-        "rna_loc": {
+        "loc_rna_fm": {
             "build": lambda: ms.RNALocLM(
                 embedding_dim=640, cnn_channels=128,
                 kernel_sizes=(3, 4, 5), lstm_hidden=128,
@@ -111,7 +111,7 @@ def build_model_configs(static_dim, output_dim):
                 mlp_hidden_size=64, dropout=0.3
             ),
         },
-        "all_local_MLP": {
+        "all_local_mlp": {
             "build": lambda: ms.AllLocalMLP(
                 static_feature_size=static_dim, output_size=output_dim,
                 hidden_size=64, num_hidden_layers=2, dropout=0.1,
@@ -123,7 +123,7 @@ def build_model_configs(static_dim, output_dim):
 def run_one_model(name):
     params = best_params_by_model[name]
     is_glm = (name == "glm_baseline")
-    all_local_data = (name == "all_local_MLP")
+    all_local_data = (name == "all_local_mlp")
     handpicked_cols = None
     if is_glm:
         handpicked_cols = [

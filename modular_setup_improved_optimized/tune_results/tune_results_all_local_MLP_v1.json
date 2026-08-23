@@ -1,5 +1,5 @@
 {
-    "model": "all_local_MLP",
+    "model": "all_local_mlp",
     "version": "v1",
     "epochs_per_trial": 20,
     "n_trials": 20,

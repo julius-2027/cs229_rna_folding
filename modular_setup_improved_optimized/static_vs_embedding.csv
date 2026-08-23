@@ -1,0 +1,5 @@
+model,pct_static,pct_embedding,pct_structure
+lstm_rna_fm,9.03,90.97,0.00
+struct_lstm_rna_fm,1.19,92.75,6.05
+transformer_rna_fm,2.11,97.89,0.00
+loc_rna_fm,0.76,99.24,0.00

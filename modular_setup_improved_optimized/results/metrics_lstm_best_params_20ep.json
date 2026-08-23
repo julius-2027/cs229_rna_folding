@@ -1,5 +1,5 @@
 {
-    "model": "bilstm",
+    "model": "lstm",
     "version": "best_params_20ep",
     "epochs": 20,
     "lr": 0.0026926469100861782,

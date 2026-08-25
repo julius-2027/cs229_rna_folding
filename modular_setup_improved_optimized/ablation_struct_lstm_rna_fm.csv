@@ -1,0 +1,4 @@
+condition,ablated_branch,test_kl,delta_vs_baseline
+baseline,none,0.3196,0.0000
+no_embed,embeddings,0.9494,0.6298
+no_struct,structure,0.6800,0.3604

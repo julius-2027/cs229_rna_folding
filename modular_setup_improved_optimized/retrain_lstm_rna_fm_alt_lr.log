@@ -1,0 +1,21 @@
+Loading RNA-FM embedding dictionary from /Users/weberlin/src/cs229/cs229_rna_folding_clone/modular_setup_improved_optimized/all_fm-rna_embeddings_filtered.pt...
+Epoch 1 | Validation loss improved -> saved checkpoint
+Epoch 1 | Train: 0.6307 | Val: 0.5140 | LR: 5.34e-04
+Epoch 2 | Validation loss improved -> saved checkpoint
+Epoch 3 | Validation loss improved -> saved checkpoint
+Epoch 4 | Validation loss improved -> saved checkpoint
+Epoch 5 | Validation loss improved -> saved checkpoint
+Epoch 6 | Train: 0.4279 | Val: 0.4695 | LR: 5.34e-04
+Epoch 7 | Validation loss improved -> saved checkpoint
+Epoch 8 | Validation loss improved -> saved checkpoint
+Epoch 11 | Validation loss improved -> saved checkpoint
+Epoch 11 | Train: 0.3758 | Val: 0.4247 | LR: 5.34e-04
+Epoch 16 | Train: 0.3173 | Val: 0.4592 | LR: 5.34e-04
+Epoch 17 | LR dropped: 5.34e-04 -> 2.67e-04
+Epoch 20 | Train: 0.2565 | Val: 0.4699 | LR: 2.67e-04
+
+val_loss per epoch: [0.514, 0.4742, 0.4646, 0.4645, 0.454, 0.4695, 0.4351, 0.4291, 0.441, 0.4373, 0.4247, 0.4267, 0.4367, 0.4327, 0.4428, 0.4592, 0.4489, 0.4518, 0.4597, 0.4699]
+
+final_train_loss=0.2565  final_val_loss=0.4699  best_val_loss=0.4247  test_js_mean=0.3176
+
+Saved to results/metrics_lstm_rna_fm_alt_lr.json

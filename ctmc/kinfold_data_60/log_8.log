@@ -1,0 +1,12 @@
+#<
+#Date: Tue Aug 18 17:06:54 2026
+#EnergyModel: dangle=2 Temp=37.0 logML=logarithmic Par=None
+#MoveSet: noShift=off noLP=off
+#Simulation: num=1 time=1000000000.00 seed=clock fpt=on rect=off mc=Kawasaki
+#Simulation: phi=1 pbounds=0.1 0.1 2
+#Output: log=kinfold_data_60/log_8 silent=off lmin=on cut=20.00
+#AAGGGUACUAACACCACCAUCUAUUGGGCCCCGAGUAAUGGCCCAUAGAGUUAAUAGGGUCU
+#.............................................................. (  0.00)
+#...(((......)))....(((((.(((((.........))))))))))............. (-15.00) X01
+(30597 32099 13212) X01   819089.006
+

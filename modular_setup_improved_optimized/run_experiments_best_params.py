@@ -34,7 +34,7 @@ LOCAL_MINIMA_K = 10
 DEVICE = "cpu"
 EPOCHS = 20
 VERSION = "best_params_20ep"
-EXCLUDE_MODELS = {"bilstm_rna_fm_proj"}
+EXCLUDE_MODELS = {"bilstm_rna_fm_proj","naive_baseline","length_baseline"}
 
 # ---------------------------------------------------------------------------
 # 1. Load best hyperparameters found during tuning

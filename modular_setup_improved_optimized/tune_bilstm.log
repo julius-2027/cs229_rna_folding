@@ -1,0 +1,18 @@
+[I 2026-08-25 12:53:34,111] A new study created in memory with name: no-name-99ebd1c8-88d1-4327-94d1-6ed91476b0b3
+[I 2026-08-25 13:07:55,201] Trial 0 finished with value: 0.39965389206179547 and parameters: {'lr': 0.00031489116479568613, 'weight_decay': 0.006351221010640704, 'batch_size': 16}. Best is trial 0 with value: 0.39965389206179547.
+[I 2026-08-25 13:13:36,760] Trial 1 finished with value: 0.9072176974744804 and parameters: {'lr': 1.7073967431528103e-05, 'weight_decay': 0.0029154431891537554, 'batch_size': 128}. Best is trial 0 with value: 0.39965389206179547.
+[I 2026-08-25 13:19:18,363] Trial 2 finished with value: 0.2948530888412609 and parameters: {'lr': 0.021368329072358756, 'weight_decay': 7.068974950624607e-06, 'batch_size': 128}. Best is trial 2 with value: 0.2948530888412609.
+[I 2026-08-25 13:34:20,373] Trial 3 finished with value: 0.33136463778527653 and parameters: {'lr': 0.0005342937261279777, 'weight_decay': 1.461896279370496e-05, 'batch_size': 16}. Best is trial 2 with value: 0.2948530888412609.
+[I 2026-08-25 13:41:37,232] Trial 4 finished with value: 0.35701219867646194 and parameters: {'lr': 0.0006672367170464204, 'weight_decay': 0.0013826232179369874, 'batch_size': 64}. Best is trial 2 with value: 0.2948530888412609.
+[I 2026-08-25 13:48:49,285] Trial 5 finished with value: 0.3102593311733066 and parameters: {'lr': 0.0026926469100861782, 'weight_decay': 4.809461967501575e-06, 'batch_size': 64}. Best is trial 2 with value: 0.2948530888412609.
+[I 2026-08-25 14:01:51,453] Trial 6 pruned. 
+[I 2026-08-25 14:10:46,552] Trial 7 pruned. 
+Train/val sizes: 7459 / 1317
+Static feature dim: 3, output dim: 50
+Loading RNA-FM embedding dictionary from /Users/weberlin/src/cs229/cs229_rna_folding_clone/modular_setup_improved_optimized/all_fm-rna_embeddings_filtered.pt...
+Early stopping: best val loss improved by less than 0.005 over the last 5 trials.
+
+Best val loss: 0.2949
+Best params: {'lr': 0.021368329072358756, 'weight_decay': 7.068974950624607e-06, 'batch_size': 128}
+
+Saved tuning results to /Users/weberlin/src/cs229/cs229_rna_folding_clone/modular_setup_improved_optimized/tune_results/tune_results_bilstm_20ep.json

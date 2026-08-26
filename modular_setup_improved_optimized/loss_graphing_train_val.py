@@ -9,21 +9,23 @@ BASE_DIR = Path(__file__).resolve().parent
 # CONFIGURATION: Simply add or remove your JSON file paths here
 # ===========================================================================
 FILE_PATHS = [
+    BASE_DIR / "results" / "metrics_naive_baseline_best_params_20ep.json",
+    BASE_DIR / "results" / "metrics_length_baseline_best_params_20ep.json",
     BASE_DIR / "results" / "metrics_glm_baseline_best_params_20ep.json",
     BASE_DIR / "results" / "metrics_mean_pool_mlp_best_params_20ep.json",
     BASE_DIR / "results" / "metrics_all_local_mlp_best_params_20ep.json",
-    BASE_DIR / "results" / "metrics_lstm_best_params_20ep.json",
+    BASE_DIR / "results" / "metrics_bilstm_best_params_20ep.json",
     BASE_DIR / "results" / "metrics_lstm_rna_fm_best_params_20ep.json",
     BASE_DIR / "results" / "metrics_struct_lstm_rna_fm_best_params_20ep.json",
     BASE_DIR / "results" / "metrics_transformer_rna_fm_best_params_20ep.json",
     BASE_DIR / "results" / "metrics_loc_rna_fm_best_params_20ep.json",
-    
+
 ]
 
 
 
 def plot_learning_curves(json_paths):
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(9, 12))
     
     colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
     
@@ -35,8 +37,7 @@ def plot_learning_curves(json_paths):
         with open(path, "r") as f:
             data = json.load(f)
             model_name = data.get("model", "UnknownModel")
-            version = data.get("version", "UnknownVersion")
-            label = f"{model_name} ({version})"
+            label = model_name
             history = data.get("history", {})
             train_loss = history.get("train_loss", [])
             val_loss = history.get("val_loss", [])
@@ -75,14 +76,14 @@ def plot_learning_curves(json_paths):
     ax1.set_xlabel("Epochs", fontsize=12)
     ax1.set_ylabel("Loss Magnitude", fontsize=12)
     ax1.grid(True, linestyle=":", alpha=0.6)
-    ax1.legend(loc="best", frameon=True, shadow=True)
-    
+
     ax2.set_title("Validation Loss (KL-Divergence)", fontsize=14)
     ax2.set_xlabel("Epochs", fontsize=12)
     ax2.set_ylabel("Loss Magnitude", fontsize=12)
     ax2.grid(True, linestyle=":", alpha=0.6)
-    ax2.legend(loc="best", frameon=True, shadow=True)
-    
+
+    ax1.legend(loc="best", frameon=True, shadow=True)
+
     plt.tight_layout(rect=[0.04, 0.03, 1, 0.95])
     fig.savefig(BASE_DIR / "results" / "graphing_train_val_loss.png", dpi=300, bbox_inches='tight')
     print(f"Saved loss comparison graph to {BASE_DIR / 'results' / 'graphing_train_val_loss.png'}")

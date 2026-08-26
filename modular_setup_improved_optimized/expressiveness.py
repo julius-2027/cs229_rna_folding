@@ -55,6 +55,7 @@ MODEL_ORDER = [
     "mean_pool_mlp",
     "all_local_mlp",
     "lstm",
+    "bilstm",
     "lstm_rna_fm",
     "struct_lstm_rna_fm",
     "transformer_rna_fm",

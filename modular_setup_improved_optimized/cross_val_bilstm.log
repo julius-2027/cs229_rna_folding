@@ -1,0 +1,11 @@
+
+==================== bilstm ====================
+Full dataset size: 10325 | static_dim=3 output_dim=50
+  Fold 1/5 | best val KL: 0.3039
+  Fold 2/5 | best val KL: 0.3132
+  Fold 3/5 | best val KL: 0.3274
+  Fold 4/5 | best val KL: 0.3076
+  Fold 5/5 | best val KL: 0.3085
+  CV KL mean +/- std: 0.3121 +/- 0.0082
+  Test KL (final model): 0.2995
+Saved /Users/weberlin/src/cs229/cs229_rna_folding_clone/modular_setup_improved_optimized/cross_val_results/cross_val_final_with_test_bilstm_raw.json

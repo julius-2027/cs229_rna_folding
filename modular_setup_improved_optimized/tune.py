@@ -57,6 +57,13 @@ def build_model_configs(static_dim, output_dim):
             ),
             "epochs": 45,
         },
+        "bilstm": {
+            "build": lambda: ms.DynamicHybridLSTM(
+                hidden_size=64, num_layers=1, static_feature_size=static_dim,
+                output_size=output_dim, mlp_hidden_size=64, bidirectional=True,
+            ),
+            "epochs": 45,
+        },
         "lstm_rna_fm": {
             "build": lambda: ms.DynamicEmbeddingHybridLSTM(
                 hidden_size=64, num_layers=1, static_feature_size=static_dim,
@@ -111,7 +118,7 @@ def main():
     parser = argparse.ArgumentParser(description="Tune lr/weight_decay/batch_size for an RNA folding model.")
     parser.add_argument(
         "--model", type=str, required=True,
-        choices=["glm_baseline", "mean_pool_mlp", "lstm", "lstm_rna_fm", "struct_lstm_rna_fm",
+        choices=["glm_baseline", "mean_pool_mlp", "lstm", "bilstm", "lstm_rna_fm", "struct_lstm_rna_fm",
                  "bilstm_rna_fm_proj", "transformer_rna_fm", "loc_rna_fm", "all_local_mlp"],
         help="Name of the model config to tune",
     )

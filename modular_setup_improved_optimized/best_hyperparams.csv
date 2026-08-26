@@ -1,9 +1,12 @@
 model,lr,weight_decay,batch_size
-glm_baseline,0.021,7.1e-06,128
-mean_pool_mlp,0.021,7.1e-06,128
 all_local_mlp,0.0015,5.5e-06,16
+bilstm,0.021,7.1e-06,128
+glm_baseline,0.021,7.1e-06,128
+loc_rna_fm,0.00017,2.5e-06,16
 lstm,0.0027,4.8e-06,64
 lstm_rna_fm,0.021,7.1e-06,128
+mean_pool_mlp,0.021,7.1e-06,128
 struct_lstm_rna_fm,0.00053,1.5e-05,16
 transformer_rna_fm,0.00053,1.5e-05,16
-loc_rna_fm,0.00017,2.5e-06,16
+naive_baseline,-,-,-
+length_baseline,-,-,-

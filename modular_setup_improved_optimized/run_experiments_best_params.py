@@ -67,6 +67,12 @@ def build_model_configs(static_dim, output_dim):
                 output_size=output_dim, mlp_hidden_size=64, bidirectional=False,
             ),
         },
+        "bilstm": {
+            "build": lambda: ms.DynamicHybridLSTM(
+                hidden_size=64, num_layers=1, static_feature_size=static_dim,
+                output_size=output_dim, mlp_hidden_size=64, bidirectional=True,
+            ),
+        },
         "lstm_rna_fm": {
             "build": lambda: ms.DynamicEmbeddingHybridLSTM(
                 hidden_size=64,

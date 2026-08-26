@@ -51,6 +51,7 @@ PARAMS = {
     "mean_pool_mlp": 3954,
     "all_local_mlp": 7666,
     "lstm": 26290,
+    "bilstm": 49074,
     "lstm_rna_fm": 373170,
     "struct_lstm_rna_fm": 374706,
     "transformer_rna_fm": 94898,
@@ -62,6 +63,7 @@ MODEL_ORDER = [
     "mean_pool_mlp",
     "all_local_mlp",
     "lstm",
+    "bilstm",
     "lstm_rna_fm",
     "struct_lstm_rna_fm",
     "transformer_rna_fm",
@@ -69,7 +71,7 @@ MODEL_ORDER = [
 ]
 
 TRIVIAL_STATIC_ONLY = {"glm_baseline", "all_local_mlp"}
-SEQ_STRUCT_STATIC_MODELS = {"mean_pool_mlp", "lstm"}
+SEQ_STRUCT_STATIC_MODELS = {"mean_pool_mlp", "lstm", "bilstm"}
 
 
 def integrated_gradients_seq_struct_static(model, sequence, structure, static_features, lengths, steps=IG_STEPS):

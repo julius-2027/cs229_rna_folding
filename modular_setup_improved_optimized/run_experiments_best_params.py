@@ -44,6 +44,10 @@ with open(BEST_PARAMS_CSV) as f:
     for row in csv.DictReader(f):
         if row["model"] in EXCLUDE_MODELS:
             continue
+        if row["lr"] == "-":
+            # closed-form baseline (naive_baseline/length_baseline): not gradient-trained,
+            # has no tuned hyperparameters to load
+            continue
         best_params_by_model[row["model"]] = {
             "lr": float(row["lr"]),
             "weight_decay": float(row["weight_decay"]),

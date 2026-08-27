@@ -172,12 +172,24 @@ def evaluate_model(model, loader, device: str = "cpu", checkpoint_path: str | No
         [jensenshannon(all_targets[i], all_preds[i]) for i in range(len(all_targets))]
     )
 
+    eps = 1e-8
+    safe_preds = np.clip(all_preds, eps, None)
+    safe_preds = safe_preds / safe_preds.sum(axis=-1, keepdims=True)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        kl_terms = np.where(
+            all_targets > 0, all_targets * (np.log(all_targets) - np.log(safe_preds)), 0.0
+        )
+    kl_scores = kl_terms.sum(axis=-1)
+
     return {
         "preds": all_preds,
         "targets": all_targets,
         "js_scores": js_scores,
         "js_mean": float(np.mean(js_scores)),
         "js_median": float(np.median(js_scores)),
+        "kl_scores": kl_scores,
+        "kl_mean": float(np.mean(kl_scores)),
+        "kl_median": float(np.median(kl_scores)),
     }
 
 
@@ -203,7 +215,7 @@ def plot_prediction_grid(bin_centers, eval_result, n_examples: int = 6, ncols: i
 
     y_true = eval_result["targets"]
     y_pred = eval_result["preds"]
-    js_scores = eval_result["js_scores"]
+    kl_scores = eval_result["kl_scores"]
 
     nrows = (n_examples + ncols - 1) // ncols
     fig, axes = plt.subplots(nrows, ncols, figsize=(4 * ncols, 3 * nrows))
@@ -211,7 +223,7 @@ def plot_prediction_grid(bin_centers, eval_result, n_examples: int = 6, ncols: i
     for i, ax in enumerate(axes[:n_examples]):
         ax.plot(bin_centers, y_true[i], label="True")
         ax.plot(bin_centers, y_pred[i], label="Predicted")
-        ax.set_title(f"JS={js_scores[i]:.3f}")
+        ax.set_title(f"KL={kl_scores[i]:.3f}")
         ax.set_xlabel("ln(folding time)")
         ax.set_ylabel("Probability")
         ax.legend()

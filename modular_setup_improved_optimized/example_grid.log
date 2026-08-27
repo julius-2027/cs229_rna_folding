@@ -1,0 +1,10 @@
+Loading RNA-FM embedding dictionary from /Users/weberlin/src/cs229/cs229_rna_folding_clone/modular_setup_improved_optimized/all_fm-rna_embeddings_filtered.pt...
+glm_baseline: done
+mean_pool_mlp: done
+all_local_mlp: done
+bilstm: done
+lstm_rna_fm: done
+struct_lstm_rna_fm: done
+transformer_rna_fm: done
+loc_rna_fm: done
+Saved /Users/weberlin/src/cs229/cs229_rna_folding_clone/modular_setup_improved_optimized/results/example_grid.png

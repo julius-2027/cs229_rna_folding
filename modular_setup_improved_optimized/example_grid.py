@@ -107,6 +107,7 @@ if __name__ == "__main__":
         )
         if bin_centers is None:
             bin_centers = (data.bin_edges[:-1] + data.bin_edges[1:]) / 2
+            bin_edges = data.bin_edges
 
         static_dim = data.train.static_features.shape[1]
         output_dim = data.train.targets.shape[1]
@@ -136,8 +137,8 @@ if __name__ == "__main__":
             ax = axes[row, col]
             pred, kl = preds_by_model[name][idx]
             true = true_dists[idx]
-            ax.plot(bin_centers, true, color="black", linewidth=1.3, alpha=0.6)
-            ax.plot(bin_centers, pred, color="crimson", linewidth=1.3)
+            ax.stairs(true, bin_edges, color="black", linewidth=1.3, alpha=0.6, baseline=None)
+            ax.stairs(pred, bin_edges, color="#1f77b4", linewidth=1.3, baseline=None)
             ax.set_xticks([])
             ax.set_yticks([])
             for spine in ax.spines.values():
@@ -158,21 +159,21 @@ if __name__ == "__main__":
 
     legend_handles = [
         mlines.Line2D([], [], color="black", alpha=0.6, linewidth=2, label="True"),
-        mlines.Line2D([], [], color="crimson", linewidth=2, label="Predicted"),
+        mlines.Line2D([], [], color="#1f77b4", linewidth=2, label="Predicted"),
     ]
     fig.legend(
         handles=legend_handles, loc="upper center", bbox_to_anchor=(0.55, 1.0),
         ncol=2, fontsize=20, frameon=True, shadow=True,
     )
 
-    plt.tight_layout(rect=[0.05, 0.05, 1, 0.93])
+    plt.tight_layout(rect=[0.1, 0.08, 1, 0.93])
     fig.subplots_adjust(wspace=0, hspace=0)
 
     # L-shaped axis indicator (bottom-left corner), matching the hand sketch:
     # a vertical arm labeled "Probability" and a horizontal arm labeled
     # "ln(folding time)" meeting at a right angle.
-    corner_x, corner_y = 0.045, 0.045
-    arm_len = 0.10
+    corner_x, corner_y = 0.075, 0.075
+    arm_len = 0.12
     fig.add_artist(mlines.Line2D(
         [corner_x, corner_x], [corner_y, corner_y + arm_len],
         transform=fig.transFigure, color="black", linewidth=1.5,
@@ -182,12 +183,12 @@ if __name__ == "__main__":
         transform=fig.transFigure, color="black", linewidth=1.5,
     ))
     fig.text(
-        corner_x - 0.012, corner_y + arm_len / 2, "Probability",
-        va="center", ha="right", rotation=90, fontsize=20,
+        corner_x - 0.035, corner_y + arm_len / 2, "Probability",
+        va="center", ha="center", rotation=90, fontsize=20,
     )
     fig.text(
-        corner_x + arm_len / 2, corner_y - 0.012, "ln(folding time)",
-        va="top", ha="center", fontsize=20,
+        corner_x + arm_len / 2, corner_y - 0.045, "ln(folding time)",
+        va="center", ha="center", fontsize=20,
     )
     out_path = BASE_DIR / "results" / "example_grid.png"
     fig.savefig(out_path, dpi=200)

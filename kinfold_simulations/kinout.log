@@ -14,3 +14,19 @@
 (26395 10248 18310) X01        1.837
 (16077 63943  7132) X01        0.721
 
+#<
+#Date: Sat Aug  8 12:24:19 2026
+#EnergyModel: dangle=2 Temp=37.0 logML=logarithmic Par=None
+#MoveSet: noShift=off noLP=off
+#Simulation: num=5 time=10000000000.00 seed=229 229 229 fpt=on rect=off mc=Kawasaki
+#Simulation: phi=1 pbounds=229 229 229
+#Output: log=kinout silent=off lmin=off cut=20.00
+#GAAACCAUGCUAGCUAGACU
+#.................... (  0.00)
+#.................... (  0.00) X01
+(  229   229   229) X01        2.387
+(13991 15876  3672) X01        0.823
+(55097  6314 24256) X01        1.056
+(26395 10248 18310) X01        1.837
+(16077 63943  7132) X01        0.721
+

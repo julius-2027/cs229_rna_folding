@@ -1,0 +1,8 @@
+Loading RNA-FM embedding dictionary from fm-rna_embeddings.pt...
+embed_transformer (old modular_setup, n_test=399):
+  pred_diversity        = 0.3276
+  true_diversity        = 0.4486
+  expressiveness_ratio  = 0.7304
+  calibration           = 0.0344
+  random example indices = [6, 21, 235, 270]
+Saved /Users/weberlin/src/cs229/cs229_rna_folding_clone/modular_setup/results/embed_transformer_example_grid.png

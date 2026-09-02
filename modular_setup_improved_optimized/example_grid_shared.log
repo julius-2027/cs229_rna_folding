@@ -9,4 +9,4 @@ transformer_rna_fm: done
 loc_rna_fm: done
 naive_baseline: done
 length_baseline: done
-Saved /Users/weberlin/src/cs229/cs229_rna_folding_clone/modular_setup_improved_optimized/results/example_grid.png
+Saved /Users/weberlin/src/cs229/cs229_rna_folding_clone/modular_setup_improved_optimized/results/example_grid_shared_ylim.png

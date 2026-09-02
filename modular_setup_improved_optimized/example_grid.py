@@ -32,6 +32,8 @@ DEVICE = "cpu"
 VERSION = "best_params_20ep"
 
 EXAMPLE_INDICES = [71, 75, 90, 24, 28, 91, 39, 76]
+EPS = 1e-8
+SHARE_YLIM = True
 
 LABEL_OVERRIDES = {"bilstm": "lstm"}
 
@@ -45,6 +47,16 @@ MODEL_ORDER = [
     "transformer_rna_fm",
     "loc_rna_fm",
 ]
+
+BASELINE_MODELS = ["naive_baseline", "length_baseline"]
+ALL_ROWS = BASELINE_MODELS + MODEL_ORDER
+
+
+def kl_div(target, pred):
+    pred = np.clip(pred, EPS, None)
+    pred = pred / pred.sum()
+    mask = target > 0
+    return float(np.sum(target[mask] * (np.log(target[mask]) - np.log(pred[mask]))))
 
 CORNERS = {
     "tl": (0.04, 0.94, "left", "top"),
@@ -128,19 +140,57 @@ if __name__ == "__main__":
                 true_dists[idx] = eval_result["targets"][idx]
         print(f"{name}: done")
 
-    n_rows = len(MODEL_ORDER)
+    # ---- naive_baseline / length_baseline rows (closed-form, no checkpoint)
+    set_seed(SEED)
+    baseline_data = prepare_data(
+        DATA_PATH, n_bins=N_BINS, random_state=SEED, handpicked_cols=["gc_content", "mfe", "n_local_minima"],
+        bin_edges_path=BIN_EDGES_PATH, data_mask=None,
+    )
+    train_targets = baseline_data.train.targets
+    train_lengths = np.array([len(s) for s in baseline_data.train.sequences])
+    mean_train = train_targets.mean(axis=0)
+
+    length_means = {}
+    for length in np.unique(train_lengths):
+        length_means[int(length)] = train_targets[train_lengths == length].mean(axis=0)
+
+    preds_by_model["naive_baseline"] = {}
+    preds_by_model["length_baseline"] = {}
+    for idx in EXAMPLE_INDICES:
+        true = true_dists[idx]
+
+        naive_pred = mean_train
+        preds_by_model["naive_baseline"][idx] = (naive_pred, kl_div(true, naive_pred))
+
+        test_length = len(baseline_data.test.sequences[idx])
+        length_pred = length_means.get(test_length, mean_train)
+        preds_by_model["length_baseline"][idx] = (length_pred, kl_div(true, length_pred))
+    print("naive_baseline: done")
+    print("length_baseline: done")
+
+    n_rows = len(ALL_ROWS)
     n_cols = len(EXAMPLE_INDICES)
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(1.7 * n_cols, 1.5 * n_rows))
 
-    for row, name in enumerate(MODEL_ORDER):
+    global_ymax = 0.0
+    if SHARE_YLIM:
+        for name in ALL_ROWS:
+            for idx in EXAMPLE_INDICES:
+                pred, _ = preds_by_model[name][idx]
+                global_ymax = max(global_ymax, float(pred.max()), float(true_dists[idx].max()))
+        global_ymax *= 1.05
+
+    for row, name in enumerate(ALL_ROWS):
         for col, idx in enumerate(EXAMPLE_INDICES):
             ax = axes[row, col]
             pred, kl = preds_by_model[name][idx]
             true = true_dists[idx]
-            ax.stairs(true, bin_edges, color="black", linewidth=1.3, alpha=0.6, baseline=None)
-            ax.stairs(pred, bin_edges, color="#1f77b4", linewidth=1.3, baseline=None)
+            ax.stairs(true, bin_edges, color="#1f77b4", linewidth=1.3, alpha=0.6, baseline=None)
+            ax.stairs(pred, bin_edges, color="black", linewidth=1.3, baseline=None)
             ax.set_xticks([])
             ax.set_yticks([])
+            if SHARE_YLIM:
+                ax.set_ylim(0, global_ymax)
             for spine in ax.spines.values():
                 spine.set_alpha(0.3)
 
@@ -158,8 +208,8 @@ if __name__ == "__main__":
     fig.subplots_adjust(wspace=0, hspace=0)
 
     legend_handles = [
-        mlines.Line2D([], [], color="black", alpha=0.6, linewidth=2, label="True"),
-        mlines.Line2D([], [], color="#1f77b4", linewidth=2, label="Predicted"),
+        mlines.Line2D([], [], color="#1f77b4", alpha=0.6, linewidth=2, label="True"),
+        mlines.Line2D([], [], color="black", linewidth=2, label="Predicted"),
     ]
     fig.legend(
         handles=legend_handles, loc="upper center", bbox_to_anchor=(0.55, 1.0),
@@ -190,6 +240,7 @@ if __name__ == "__main__":
         corner_x + arm_len / 2, corner_y - 0.045, "ln(folding time)",
         va="center", ha="center", fontsize=20,
     )
-    out_path = BASE_DIR / "results" / "example_grid.png"
+    out_name = "example_grid_shared_ylim.png" if SHARE_YLIM else "example_grid.png"
+    out_path = BASE_DIR / "results" / out_name
     fig.savefig(out_path, dpi=200)
     print(f"Saved {out_path}")
